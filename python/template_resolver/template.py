@@ -28,7 +28,7 @@ class Template(object):
                 for field in overlap:
                     if fields[field] != template_fields[field]:
                         raise exceptions.TokenConflictError(
-                            segment.name, [fields[field], template_fields[field]]
+                            field, [fields[field], template_fields[field]]
                         )
                 fields.update(template_fields)
             elif isinstance(segment, token.Token):

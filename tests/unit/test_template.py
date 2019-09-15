@@ -25,6 +25,63 @@ class TestTemplate(object):
         assert t.segments() == ["abc", "def"]
 
     @pytest.mark.parametrize(
+        "segments, string, index, expected_fields, expected_end",
+        [
+            (["abc", token.IntToken("int"), "def"], "abc1def12", 0, {"int": 1}, 7),
+            (
+                [token.StringToken("str"), "_", token.IntToken("int")],
+                "word_30",
+                0,
+                {"int": 30, "str": "word"},
+                7,
+            ),
+            # Duplicates of a token must parse the same value
+            ([token.IntToken("int"), "_", token.IntToken("int")], "x_1_1_x", 2, {"int": 1}, 5),
+            # Child template
+            (
+                [
+                    template.Template("child", ["prefix_", token.StringToken("str")]),
+                    "_",
+                    token.IntToken("int"),
+                ],
+                "a_prefix_word_1_b",
+                2,
+                {"str": "word", "int": 1},
+                15,
+            ),
+        ],
+    )
+    def test_extract(self, segments, string, index, expected_fields, expected_end):
+        t = template.Template("name", segments)
+        fields, end = t.extract(string, index=index)
+        assert fields == expected_fields
+        assert end == expected_end
+
+    def test_extract_error(self):
+        t = template.Template("name", ["abc", "def"])
+        with pytest.raises(exceptions.ParseError):
+            t.extract("abcghi")
+
+    def test_extract_conflict_error(self):
+        t1 = template.Template("name", [token.IntToken("int"), "_", token.IntToken("int")])
+        with pytest.raises(exceptions.TokenConflictError) as exc_info:
+            t1.extract("1_2")
+        assert exc_info.value.token_name == "int"
+        assert exc_info.value.values == [1, 2]
+
+        # Child templates with token names that match the parent should be consistent
+        t2 = template.Template("name", [token.IntToken("int"), "_", t1])
+        with pytest.raises(exceptions.TokenConflictError) as exc_info:
+            t2.extract("1_2_2")
+        assert exc_info.value.token_name == "int"
+        assert exc_info.value.values == [1, 2]
+
+    def test_extract_invalid_segment_error(self):
+        t = template.Template("name", ["abc", 1])
+        with pytest.raises(TypeError):
+            t.extract("abc1")
+
+    @pytest.mark.parametrize(
         "segments, local_only, expected",
         [
             (["abc", token.StringToken("one"), "def"], False, ["abc", "def"]),
