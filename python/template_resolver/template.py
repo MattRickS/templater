@@ -59,17 +59,6 @@ class Template(object):
         ]
 
     def format(self, fields):
-        # A template can be provided in full
-        if self._name in fields:
-            field = fields[self._name]
-            try:
-                self.parse(field)
-            except exceptions.ParseError:
-                raise exceptions.FormatError(
-                    "Value {!r} does not match template {!r}".format(field, self._name)
-                )
-            return field
-
         segments = []
         for segment in self._segments:
             if isinstance(segment, six.string_types):
@@ -77,9 +66,11 @@ class Template(object):
             elif isinstance(segment, Template):
                 string_segment = segment.format(fields)
             elif isinstance(segment, token.Token):
+                if segment.name not in fields:
+                    raise exceptions.MissingTokenError(segment.name)
                 string_segment = segment.format(fields[segment.name])
             else:
-                raise TypeError("Unknown segment: {}".format(segment))
+                raise TypeError("Unknown segment type: {}".format(segment))
             segments.append(string_segment)
         return "".join(segments)
 
@@ -101,7 +92,7 @@ class Template(object):
             elif isinstance(segment, Template):
                 string_segment = segment.pattern()
             else:
-                raise ValueError("Unknown segment")
+                raise TypeError("Unknown segment type: {}".format(segment))
             segments.append(string_segment)
         return "".join(segments)
 

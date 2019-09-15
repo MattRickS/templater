@@ -51,11 +51,41 @@ class TestTemplate(object):
             ),
             # Duplicates of a token should use the same value
             ([token.IntToken("int"), "_", token.IntToken("int")], {"int": 1}, "1_1"),
+            # Child template
+            (
+                [
+                    template.Template("child", ["prefix_", token.StringToken("str")]),
+                    "_",
+                    token.IntToken("int"),
+                ],
+                {"str": "word", "int": 1},
+                "prefix_word_1",
+            ),
         ],
     )
     def test_format(self, segments, fields, expected):
         t = template.Template("name", segments)
         assert t.format(fields) == expected
+
+    def test_format_error(self):
+        t = template.Template("name", [token.StringToken("str"), "_", 1])
+
+        # 1 is an invalid segment
+        with pytest.raises(TypeError):
+            t.format({"str": "abc"})
+
+    def test_format_missing_token_error(self):
+        t = template.Template(
+            "name", [token.StringToken("str"), "_", token.IntToken("int")]
+        )
+
+        with pytest.raises(exceptions.MissingTokenError) as exc_info:
+            t.format({"str": "abc"})
+        assert exc_info.value.token_name == "int"
+
+        with pytest.raises(exceptions.MissingTokenError) as exc_info:
+            t.format({"int": 1})
+        assert exc_info.value.token_name == "str"
 
     @pytest.mark.parametrize(
         "segments, string, expected",
@@ -68,6 +98,16 @@ class TestTemplate(object):
             ),
             # Duplicates of a token must parse the same value
             ([token.IntToken("int"), "_", token.IntToken("int")], "1_1", {"int": 1}),
+            # Child template
+            (
+                [
+                    template.Template("child", ["prefix_", token.StringToken("str")]),
+                    "_",
+                    token.IntToken("int"),
+                ],
+                "prefix_word_1",
+                {"str": "word", "int": 1},
+            ),
         ],
     )
     def test_parse(self, segments, string, expected):
@@ -85,6 +125,10 @@ class TestTemplate(object):
         with pytest.raises(exceptions.ParseError):
             t.parse("abc_10")
 
+        # incomplete match has trailing string "def"
+        with pytest.raises(exceptions.ParseError):
+            t.parse("abc10def")
+
     def test_parse_token_conflict_error(self):
         t = template.Template(
             "name",
@@ -98,11 +142,28 @@ class TestTemplate(object):
         assert exc_info.value.token_name == "str"
         assert exc_info.value.values == ["abc", "def"]
 
-    def test_pattern(self):
-        t = template.Template(
-            "name", ["abc_", token.IntToken("int"), ".def.", token.StringToken("str")]
-        )
-        assert t.pattern() == "abc_{int}.def.{str}"
+    @pytest.mark.parametrize(
+        "segments, expected",
+        [
+            (
+                ["abc_", token.IntToken("int"), ".def.", token.StringToken("str")],
+                "abc_{int}.def.{str}",
+            ),
+            (
+                [token.StringToken("str"), "_", template.Template("template", ["v", token.IntToken("int")])],
+                "{str}_v{int}",
+            ),
+        ],
+    )
+    def test_pattern(self, segments, expected):
+        t = template.Template("name", segments)
+        assert t.pattern() == expected
+
+    def test_pattern_error(self):
+        t = template.Template("name", ["abc_", token.IntToken("int"), ".def.", 1])
+        # 1 is an invalid segment
+        with pytest.raises(TypeError):
+            t.pattern()
 
     def test_regex(self):
         t = template.Template(
