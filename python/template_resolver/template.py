@@ -1,3 +1,4 @@
+import re
 import six
 
 from template_resolver import exceptions, token
@@ -26,19 +27,15 @@ class Template(object):
                 overlap = set(template_fields).intersection(fields)
                 for field in overlap:
                     if fields[field] != template_fields[field]:
-                        raise exceptions.ParseError(
-                            "Mismatched values found for {!r}: {!r} != {!r}".format(
-                                segment._name, fields[field], template_fields[field]
-                            )
+                        raise exceptions.TokenConflictError(
+                            segment.name, [fields[field], template_fields[field]]
                         )
                 fields.update(template_fields)
             elif isinstance(segment, token.Token):
                 value, index = segment.extract(string, index=index)
                 if segment.name in fields and fields[segment.name] != value:
-                    raise exceptions.ParseError(
-                        "Mismatched values found for {!r}: {!r} != {!r}".format(
-                            segment.name, fields[segment.name], value
-                        )
+                    raise exceptions.TokenConflictError(
+                        segment.name, [fields[segment.name], value]
                     )
                 fields[segment.name] = value
             elif isinstance(segment, six.string_types):
@@ -55,14 +52,11 @@ class Template(object):
         return fields, index
 
     def fixed_strings(self, local_only=False):
-        strings = []
-        for segment in self._segments:
-            if isinstance(segment, six.string_types):
-                strings.append(segment)
-            elif isinstance(segment, Template) and not local_only:
-                strings.extend(segment.fixed_strings(local_only=local_only))
-
-        return strings
+        return [
+            segment
+            for segment in self.segments(local_only=local_only)
+            if isinstance(segment, six.string_types)
+        ]
 
     def format(self, fields):
         # A template can be provided in full
@@ -114,7 +108,9 @@ class Template(object):
     def regex(self):
         return "".join(
             [
-                segment if isinstance(segment, six.string_types) else segment.regex()
+                re.escape(segment)
+                if isinstance(segment, six.string_types)
+                else segment.regex()
                 for segment in self._segments
             ]
         )
