@@ -6,6 +6,11 @@ from template_resolver import exceptions, token
 
 class Template(object):
     def __init__(self, name, segments):
+        """
+        Args:
+            name (str): Name of the template
+            segments (list[str|token.Token|Template]): List of path segments
+        """
         self._name = name
         self._segments = segments
 
@@ -17,9 +22,33 @@ class Template(object):
 
     @property
     def name(self):
+        """
+        Returns:
+            str: Name of the template
+        """
         return self._name
 
     def extract(self, string, index=0):
+        """
+        Attempts to extract the template from a section of the string. Does not
+        have to match the full remainder of the string.
+
+        Raises:
+            exceptions.ParseError: If the string doesn't match the template
+            exceptions.TokenConflictError: If a repeated token matches
+                conflicting values
+
+        Args:
+            string (str): String to extract the template from
+
+        Keyword Args:
+            index (int): Index to start extracting from, defaults to the start
+                of the string
+
+        Returns:
+            tuple[dict, int]: Tuple containing the dictionary of parsed fields
+                and the index the match finished on
+        """
         fields = {}
         for segment in self._segments:
             if isinstance(segment, Template):
@@ -52,6 +81,14 @@ class Template(object):
         return fields, index
 
     def fixed_strings(self, local_only=False):
+        """
+        Keyword Args:
+            local_only (bool): Whether or not to include fixed string segments
+                from child templates
+
+        Returns:
+            list[str]: List of string segments
+        """
         return [
             segment
             for segment in self.segments(local_only=local_only)
@@ -59,6 +96,17 @@ class Template(object):
         ]
 
     def format(self, fields):
+        """
+        Raises:
+            exceptions.FormatError: If the fields don't match the template
+
+        Args:
+            fields (dict): Dictionary of fields to format the template with,
+                must match tokens
+
+        Returns:
+            str: Formatted template string
+        """
         segments = []
         for segment in self._segments:
             if isinstance(segment, six.string_types):
@@ -75,6 +123,19 @@ class Template(object):
         return "".join(segments)
 
     def parse(self, string):
+        """
+        Raises:
+            exceptions.ParseError: If the string doesn't match the template
+                exactly
+            exceptions.TokenConflictError: If a repeated token matches
+                conflicting values
+
+        Args:
+            string (str): String to parse the template tokens from
+
+        Returns:
+            dict: Dictionary of fields extracted from the tokens
+        """
         fields, end = self.extract(string)
         if end != len(string):
             raise exceptions.ParseError(
@@ -83,6 +144,14 @@ class Template(object):
         return fields
 
     def pattern(self):
+        """
+        Raises:
+            TypeError: If any segments are an unknown type
+
+        Returns:
+            str: Standard format string representing the template, eg,
+                word_{tokenA}_{tokenB}
+        """
         segments = []
         for segment in self._segments:
             if isinstance(segment, six.string_types):
@@ -97,6 +166,10 @@ class Template(object):
         return "".join(segments)
 
     def regex(self):
+        """
+        Returns:
+            str: Regex string for matching the entire template
+        """
         return "".join(
             [
                 re.escape(segment)
@@ -107,6 +180,14 @@ class Template(object):
         )
 
     def segments(self, local_only=False):
+        """
+        Keyword Args:
+            local_only (bool): Whether or not to expand any child templates into
+                their contained segments
+
+        Returns:
+            list[str|token.Token|Template]: List of segments in the template
+        """
         segments = []
         for segment in self._segments:
             if isinstance(segment, Template) and not local_only:
@@ -116,6 +197,14 @@ class Template(object):
         return segments
 
     def templates(self, local_only=False):
+        """
+        Keyword Args:
+            local_only (bool): Whether or not to include all descendant
+                templates
+
+        Returns:
+            list[Template]: List of all template segments
+        """
         templates = []
         for segment in self._segments:
             if isinstance(segment, Template):
@@ -126,6 +215,14 @@ class Template(object):
         return templates
 
     def tokens(self, local_only=False):
+        """
+        Keyword Args:
+            local_only (bool): Whether or not to expand any child templates into
+                their contained tokens
+
+        Returns:
+            list[token.Token]: List of token segments
+        """
         return [
             segment
             for segment in self.segments(local_only=local_only)
