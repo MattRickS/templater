@@ -74,7 +74,7 @@ class TestIntToken(object):
 
 class TestStringToken(object):
     def test_format(self):
-        t = token.StringToken("name")
+        t = token.AlphaToken("name")
         assert t.format("abc") == "abc"
 
         with pytest.raises(exceptions.FormatError):
@@ -84,5 +84,5 @@ class TestStringToken(object):
             t.format(123)
 
     def test_parse(self):
-        t = token.StringToken("name")
+        t = token.AlphaToken("name")
         assert t.parse("abc") == "abc"

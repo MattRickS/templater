@@ -170,7 +170,9 @@ class IntToken(Token):
         return int(value)
 
 
-class StringToken(Token):
+class AlphaToken(Token):
+    """ Token representing alphabetic characters only """
+
     def __init__(self, name, regex="[a-zA-Z]+"):
         """
         Args:
@@ -180,7 +182,7 @@ class StringToken(Token):
             regex (str): Regex pattern for the string. Defaults to alphabetical
                 characters only
         """
-        super(StringToken, self).__init__(name, regex)
+        super(AlphaToken, self).__init__(name, regex)
 
     def format(self, value):
         """
@@ -193,4 +195,32 @@ class StringToken(Token):
         Returns:
             str: Formatted value
         """
-        return super(StringToken, self).format(str(value))
+        return super(AlphaToken, self).format(str(value))
+
+
+class AlphaNumToken(Token):
+    """ Token representing alphanumeric characters only """
+
+    def __init__(self, name, regex="[a-zA-Z0-9]+"):
+        """
+        Args:
+            name (str): Name of the token
+
+        Keyword Args:
+            regex (str): Regex pattern for the string. Defaults to alphanumeric
+                characters only
+        """
+        super(AlphaNumToken, self).__init__(name, regex)
+
+    def format(self, value):
+        """
+        Raises:
+            exceptions.FormatError: If the value doesn't match the token
+
+        Args:
+            value (str): String value to be formatted into a string
+
+        Returns:
+            str: Formatted value
+        """
+        return super(AlphaNumToken, self).format(str(value))
