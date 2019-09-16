@@ -25,3 +25,7 @@ class TokenConflictError(ParseError):
         )
         self.token_name = token_name
         self.values = values
+
+
+class ResolverError(Exception):
+    """ Errors raised with the TemplateResolver construction """
