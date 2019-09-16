@@ -4,26 +4,29 @@ from template_resolver import constants, exceptions, template, token
 
 
 class TemplateResolver(object):
-    def __init__(self, config):
-        # Must be created before the dict comprehension
-        self._templates = {}
-        self._tokens = {}
-
+    @classmethod
+    def from_config(cls, config):
         token_config = config[constants.KEY_TOKENS]
         template_config = config[constants.KEY_TEMPLATES]
-        self._tokens = {
-            token_name: self.create_token(
-                token_name,
-                token_data
-                if isinstance(token_data, dict)
-                else {constants.KEY_TYPE: token_data},
-            )
-            for token_name, token_data in token_config.items()
-        }
-        self._templates = {
-            name: self.create_template(name, string, config=template_config)
-            for name, string in template_config.items()
-        }
+
+        resolver_obj = cls()
+
+        for token_name, token_data in token_config.items():
+            if isinstance(token_data, str):
+                token_data = {constants.KEY_TYPE: token_data}
+            resolver_obj.create_token(token_name, token_data)
+
+        for name, string in template_config.items():
+            # Referenced templates may be already loaded by parent templates
+            if not resolver_obj.has_template(name):
+                resolver_obj.create_template(name, string, config=template_config)
+
+        return resolver_obj
+
+    def __init__(self, tokens=None, templates=None):
+        # Must be created before the dict comprehension
+        self._templates = {t.name: t for t in tokens or ()}
+        self._tokens = {t.name: t for t in templates or ()}
 
     def create_template(self, template_name, template_string, config=None):
         if template_name in self._templates:
@@ -64,6 +67,7 @@ class TemplateResolver(object):
                 )
 
         template_obj = template.Template(template_name, segments)
+        self._templates[template_name] = template_obj
         return template_obj
 
     def create_token(self, token_name, token_data):
@@ -94,6 +98,7 @@ class TemplateResolver(object):
             if token_regex
             else token_cls(token_name)
         )
+        self._tokens[token_name] = token_obj
         return token_obj
 
     def get_template(self, name):
@@ -111,3 +116,9 @@ class TemplateResolver(object):
                 "Referenced template name does not exist: {}".format(name)
             )
         return token_obj
+
+    def has_template(self, name):
+        return name in self._templates
+
+    def has_token(self, name):
+        return name in self._tokens
