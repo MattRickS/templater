@@ -124,12 +124,6 @@ class TemplateResolver(object):
             token_cls = token.IntToken
         elif token_type == constants.TokenType.String:
             token_cls = token.StringToken
-        elif token_type == constants.TokenType.Custom:
-            if not token_regex:
-                raise exceptions.ResolverError(
-                    "Custom tokens require a regex: {}".format(token_name)
-                )
-            token_cls = token.Token
         else:
             raise exceptions.ResolverError("Unknown token type: {}".format(token_type))
 

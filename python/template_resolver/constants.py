@@ -1,6 +1,5 @@
 class TokenType(object):
     String = "str"
-    Custom = "custom"
     Int = "int"
 
 
