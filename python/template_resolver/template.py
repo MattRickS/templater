@@ -124,7 +124,7 @@ class Template(object):
                 string_segment = segment
             elif isinstance(segment, token.Token):
                 if formatters:
-                    string_segment = "{{{}:{}}}".format(segment.name, segment.format_string)
+                    string_segment = "{{{}:{}}}".format(segment.name, segment.format_spec)
                 else:
                     string_segment = "{{{}}}".format(segment.name)
             elif isinstance(segment, Template):

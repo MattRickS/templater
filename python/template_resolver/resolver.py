@@ -30,6 +30,24 @@ class TemplateResolver(object):
 
         return resolver_obj
 
+    @classmethod
+    def get_token_cls(cls, token_type):
+        """
+        Args:
+            token_type (str): String name of the token type
+
+        Returns:
+            Type[token.Token]: Token class the name represents
+        """
+        if token_type == constants.TokenType.Int:
+            token_cls = token.IntToken
+        elif token_type == constants.TokenType.String:
+            token_cls = token.StringToken
+        else:
+            raise exceptions.ResolverError("Unknown token type: {}".format(token_type))
+
+        return token_cls
+
     def __init__(self, tokens=None, templates=None):
         """
         Args:
@@ -100,14 +118,14 @@ class TemplateResolver(object):
         self._templates[template_name] = template_obj
         return template_obj
 
-    def create_token(self, token_name, token_data):
+    def create_token(self, token_name, token_config):
         """
         Raises:
             exceptions.ResolverError: If the token data is invalid
 
         Args:
             token_name (str): Name of the token to create
-            token_data (dict): Dictionary of token data, with a minimum of a
+            token_config (dict): Dictionary of token data, with a minimum of a
                 "type" key.
 
         Returns:
@@ -118,20 +136,12 @@ class TemplateResolver(object):
                 "Token {!r} already exists".format(token_name)
             )
 
-        token_type = token_data[constants.KEY_TYPE]
-        token_regex = token_data.get(constants.KEY_REGEX)
-        if token_type == constants.TokenType.Int:
-            token_cls = token.IntToken
-        elif token_type == constants.TokenType.String:
-            token_cls = token.StringToken
-        else:
-            raise exceptions.ResolverError("Unknown token type: {}".format(token_type))
+        token_type = token_config[constants.KEY_TYPE]
+        token_cls = self.get_token_cls(token_type)
+        regex = token_cls.get_regex_from_config(token_config)
+        format_spec = token_cls.get_format_spec_from_config(token_config)
+        token_obj = token_cls(token_name, regex=regex, format_spec=format_spec)
 
-        token_obj = (
-            token_cls(token_name, regex=token_regex)
-            if token_regex
-            else token_cls(token_name)
-        )
         self._tokens[token_name] = token_obj
         return token_obj
 
