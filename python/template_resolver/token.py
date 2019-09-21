@@ -4,14 +4,16 @@ from template_resolver import exceptions
 
 
 class Token(object):
-    def __init__(self, name, regex):
+    def __init__(self, name, regex, format_string=None):
         """
         Args:
             name (str): Name of the token
             regex (str): Regex pattern the token should capture
+            format_string (str): Python format string to use when formatting
         """
         self._name = name
-        self._pattern = re.compile(regex)
+        self._pattern = re.compile("^{}$".format(regex))
+        self._format_string = format_string or ""
 
     def __repr__(self):
         return "{s.__class__.__name__}({s.name!r}, {regex!r})".format(
@@ -29,34 +31,13 @@ class Token(object):
         """
         return self._name
 
-    def extract(self, string, index=0):
+    @property
+    def format_string(self):
         """
-        Attempts to extract the value from a section of the string. Does not
-        have to match the full remainder of the string.
-
-        Raises:
-            exceptions.ParseError: If the string doesn't match the token
-
-        Args:
-            string (str): String to extract the token from
-
-        Keyword Args:
-            index (int): Index to start extracting from, defaults to the start
-                of the string
-
         Returns:
-            tuple[str, int]: Tuple containing the string that matches and the
-                index the match finished on
+            str: Python format string for the token
         """
-        match = self._pattern.match(string, index)
-        if match is None:
-            raise exceptions.ParseError(
-                "Cannot extract {!r} from {!r} at index {}".format(
-                    self._name, string, index
-                )
-            )
-        end = match.end()
-        return string[index:end], end
+        return self._format_string
 
     def format(self, value):
         """
@@ -69,13 +50,21 @@ class Token(object):
         Returns:
             str: Formatted value
         """
+        formatter = "{:%s}" % self._format_string
         try:
-            self.parse(value)
+            string = formatter.format(value)
+        except ValueError:
+            raise exceptions.FormatError(
+                "Value {!r} does not match {!r}".format(value, self)
+            )
+
+        try:
+            self.parse(string)
         except exceptions.ParseError:
             raise exceptions.FormatError(
                 "Value {!r} does not match {!r}".format(value, self)
             )
-        return value
+        return string
 
     def parse(self, string):
         """
@@ -88,16 +77,13 @@ class Token(object):
         Returns:
             str: Parsed value
         """
-        try:
-            value, end = self.extract(string)
-        except exceptions.ParseError:
-            value, end = None, -1
-
-        if end != len(string):
+        matched = self._pattern.match(string)
+        if matched is None:
             raise exceptions.ParseError(
-                "String {!r} does not match {!r}".format(string, self)
+                "String '{}' does not match token '{}'".format(string, self._name)
             )
 
+        value = self.to_value(string)
         return value
 
     def regex(self):
@@ -105,11 +91,21 @@ class Token(object):
         Returns:
             str: String pattern representing the regex
         """
-        return self._pattern.pattern
+        return self._pattern.pattern[1:-1]
+
+    def to_value(self, string):
+        """
+        Args:
+            string (str): String to be converted to the token's value
+
+        Returns:
+            str:
+        """
+        return string
 
 
 class IntToken(Token):
-    def __init__(self, name, regex="[0-9]+"):
+    def __init__(self, name, regex="[0-9]+", format_string=None):
         """
         Args:
             name (str): Name of the token
@@ -117,63 +113,34 @@ class IntToken(Token):
         Keyword Args:
             regex (str): Regex pattern for the string. Defaults to integer
                 characters only
+            format_string (str): Python format string to use when formatting,
+                should not include the 'd' for integer
+
         """
-        super(IntToken, self).__init__(name, regex)
+        super(IntToken, self).__init__(
+            name, regex, format_string=(format_string or "") + "d"
+        )
 
-    def extract(self, string, index=0):
+    def to_value(self, string):
         """
-        Attempts to extract the integer from a section of the string. Does not
-        have to match the full remainder of the string.
-
-        Raises:
-            exceptions.ParseError: If the string doesn't match the token
-
         Args:
-            string (str): String to extract the token from
-
-        Keyword Args:
-            index (int): Index to start extracting from, defaults to the start
-                of the string
+            string (str): String value
 
         Returns:
-            tuple[int, int]: Tuple containing the integer that matches and the
-                index the match finished on
+            int: Integer value
         """
-        value, end = super(IntToken, self).extract(string, index=index)
-        return int(value), end
-
-    def format(self, value):
-        """
-        Raises:
-            exceptions.FormatError: If the value doesn't match the token
-
-        Args:
-            value (int): Integer value to be formatted into a string
-
-        Returns:
-            str: Formatted value
-        """
-        return super(IntToken, self).format(str(value))
-
-    def parse(self, string):
-        """
-        Raises:
-            exceptions.ParseError: If the string doesn't match the token
-
-        Args:
-            string (str): String to parse the value from. Must match exactly.
-
-        Returns:
-            int: Parsed integer value
-        """
-        value = super(IntToken, self).parse(string)
-        return int(value)
+        try:
+            return int(string)
+        except ValueError:
+            raise exceptions.ParseError(
+                "String '{}' does not match int token '{}'".format(string, self._name)
+            )
 
 
-class AlphaToken(Token):
+class StringToken(Token):
     """ Token representing alphabetic characters only """
 
-    def __init__(self, name, regex="[a-zA-Z]+"):
+    def __init__(self, name, regex="[a-zA-Z]+", format_string=None):
         """
         Args:
             name (str): Name of the token
@@ -182,45 +149,6 @@ class AlphaToken(Token):
             regex (str): Regex pattern for the string. Defaults to alphabetical
                 characters only
         """
-        super(AlphaToken, self).__init__(name, regex)
-
-    def format(self, value):
-        """
-        Raises:
-            exceptions.FormatError: If the value doesn't match the token
-
-        Args:
-            value (str): String value to be formatted into a string
-
-        Returns:
-            str: Formatted value
-        """
-        return super(AlphaToken, self).format(str(value))
-
-
-class AlphaNumToken(Token):
-    """ Token representing alphanumeric characters only """
-
-    def __init__(self, name, regex="[a-zA-Z0-9]+"):
-        """
-        Args:
-            name (str): Name of the token
-
-        Keyword Args:
-            regex (str): Regex pattern for the string. Defaults to alphanumeric
-                characters only
-        """
-        super(AlphaNumToken, self).__init__(name, regex)
-
-    def format(self, value):
-        """
-        Raises:
-            exceptions.FormatError: If the value doesn't match the token
-
-        Args:
-            value (str): String value to be formatted into a string
-
-        Returns:
-            str: Formatted value
-        """
-        return super(AlphaNumToken, self).format(str(value))
+        super(StringToken, self).__init__(
+            name, regex, format_string=(format_string or "") + "s"
+        )

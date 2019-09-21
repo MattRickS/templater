@@ -1,6 +1,5 @@
 class TokenType(object):
-    Alpha = "alpha"
-    AlphaNum = "alphanum"
+    String = "str"
     Custom = "custom"
     Int = "int"
 

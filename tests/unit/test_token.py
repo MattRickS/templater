@@ -16,22 +16,16 @@ class TestToken(object):
         t = token.Token("name", "")
         assert t.name == "name"
 
-    @pytest.mark.parametrize(
-        "regex, string, index, expected_value, expected_end",
-        [("[a-zA-Z]+", "abc", 0, "abc", 3), ("[a-zA-Z]+", "abc123", 0, "abc", 3)],
-    )
-    def test_extract(self, regex, string, index, expected_value, expected_end):
-        t = token.Token("name", regex)
-        value, end = t.extract(string, index=index)
-        assert value == expected_value
-        assert end == expected_end
-
     def test_format(self):
         t = token.Token("name", "[a-zA-Z]+")
         assert t.format("abc") == "abc"
 
         with pytest.raises(exceptions.FormatError):
             t.format("123")
+
+    def test_format_string(self):
+        t = token.Token("name", "[a-z]", format_string="")
+        assert t.format_string == ""
 
     def test_parse(self):
         t = token.Token("name", "[a-zA-Z]+")
@@ -46,23 +40,17 @@ class TestToken(object):
 
 
 class TestIntToken(object):
-    @pytest.mark.parametrize(
-        "string, index, expected_value, expected_end",
-        [("123", 0, 123, 3), ("123abc", 0, 123, 3)],
-    )
-    def test_extract(self, string, index, expected_value, expected_end):
-        t = token.IntToken("name")
-        value, end = t.extract(string, index=index)
-        assert value == expected_value
-        assert end == expected_end
-
     def test_format(self):
         t = token.IntToken("name")
         assert t.format(123) == "123"
-        assert t.format("123") == "123"
 
         with pytest.raises(exceptions.FormatError):
-            t.format("12a")
+            t.format("123")
+
+    @pytest.mark.parametrize("format_string, expected", [("", "d"), ("03", "03d")])
+    def test_format_string(self, format_string, expected):
+        t = token.IntToken("name", "[a-z]", format_string=format_string)
+        assert t.format_string == expected
 
     def test_parse(self):
         t = token.IntToken("name")
@@ -74,7 +62,7 @@ class TestIntToken(object):
 
 class TestStringToken(object):
     def test_format(self):
-        t = token.AlphaToken("name")
+        t = token.StringToken("name")
         assert t.format("abc") == "abc"
 
         with pytest.raises(exceptions.FormatError):
@@ -83,6 +71,11 @@ class TestStringToken(object):
         with pytest.raises(exceptions.FormatError):
             t.format(123)
 
+    @pytest.mark.parametrize("format_string, expected", [("", "s"), ("<10", "<10s")])
+    def test_format_string(self, format_string, expected):
+        t = token.StringToken("name", "[a-z]", format_string=format_string)
+        assert t.format_string == expected
+
     def test_parse(self):
-        t = token.AlphaToken("name")
+        t = token.StringToken("name")
         assert t.parse("abc") == "abc"

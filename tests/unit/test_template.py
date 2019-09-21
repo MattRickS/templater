@@ -10,7 +10,10 @@ class TestTemplate(object):
 
     def test_str(self):
         t = template.Template("name", ["abc", "def"])
-        assert str(t) == "name"
+        assert str(t) == "name:abcdef"
+
+        t = template.Template("name", ["abc", token.IntToken("one")])
+        assert str(t) == "name:abc{one}"
 
     def test_name(self):
         t = template.Template("name", ["abc", "def"])
@@ -25,35 +28,38 @@ class TestTemplate(object):
         assert t.segments() == ["abc", "def"]
 
     @pytest.mark.parametrize(
-        "segments, string, index, expected_fields, expected_end",
+        "segments, string, expected_fields, expected_end",
         [
-            (["abc", token.IntToken("int"), "def"], "abc1def12", 0, {"int": 1}, 7),
+            (["abc", token.IntToken("int"), "def"], "abc1def12", {"int": 1}, 7),
             (
-                [token.AlphaToken("str"), "_", token.IntToken("int")],
+                [token.StringToken("str"), "_", token.IntToken("int")],
                 "word_30",
-                0,
                 {"int": 30, "str": "word"},
                 7,
             ),
             # Duplicates of a token must parse the same value
-            ([token.IntToken("int"), "_", token.IntToken("int")], "x_1_1_x", 2, {"int": 1}, 5),
+            (
+                [token.IntToken("int"), "_", token.IntToken("int")],
+                "1_1_x",
+                {"int": 1},
+                3,
+            ),
             # Child template
             (
                 [
-                    template.Template("child", ["prefix_", token.AlphaToken("str")]),
+                    template.Template("child", ["prefix_", token.StringToken("str")]),
                     "_",
                     token.IntToken("int"),
                 ],
-                "a_prefix_word_1_b",
-                2,
+                "prefix_word_1_b",
                 {"str": "word", "int": 1},
-                15,
+                13,
             ),
         ],
     )
-    def test_extract(self, segments, string, index, expected_fields, expected_end):
+    def test_extract(self, segments, string, expected_fields, expected_end):
         t = template.Template("name", segments)
-        fields, end = t.extract(string, index=index)
+        fields, end = t.extract(string)
         assert fields == expected_fields
         assert end == expected_end
 
@@ -63,18 +69,16 @@ class TestTemplate(object):
             t.extract("abcghi")
 
     def test_extract_conflict_error(self):
-        t1 = template.Template("name", [token.IntToken("int"), "_", token.IntToken("int")])
-        with pytest.raises(exceptions.TokenConflictError) as exc_info:
+        t1 = template.Template(
+            "name", [token.IntToken("int"), "_", token.IntToken("int")]
+        )
+        with pytest.raises(exceptions.ParseError):
             t1.extract("1_2")
-        assert exc_info.value.token_name == "int"
-        assert exc_info.value.values == [1, 2]
 
         # Child templates with token names that match the parent should be consistent
         t2 = template.Template("name", [token.IntToken("int"), "_", t1])
-        with pytest.raises(exceptions.TokenConflictError) as exc_info:
+        with pytest.raises(exceptions.ParseError):
             t2.extract("1_2_2")
-        assert exc_info.value.token_name == "int"
-        assert exc_info.value.values == [1, 2]
 
     def test_extract_invalid_segment_error(self):
         t = template.Template("name", ["abc", 1])
@@ -84,7 +88,7 @@ class TestTemplate(object):
     @pytest.mark.parametrize(
         "segments, local_only, expected",
         [
-            (["abc", token.AlphaToken("one"), "def"], False, ["abc", "def"]),
+            (["abc", token.StringToken("one"), "def"], False, ["abc", "def"]),
             (
                 ["abc", template.Template("temp", ["ghi"]), "def"],
                 False,
@@ -102,7 +106,7 @@ class TestTemplate(object):
         [
             (["abc", token.IntToken("int"), "def"], {"int": 1}, "abc1def"),
             (
-                [token.AlphaToken("str"), "_", token.IntToken("int")],
+                [token.StringToken("str"), "_", token.IntToken("int")],
                 {"int": 30, "str": "word"},
                 "word_30",
             ),
@@ -111,7 +115,7 @@ class TestTemplate(object):
             # Child template
             (
                 [
-                    template.Template("child", ["prefix_", token.AlphaToken("str")]),
+                    template.Template("child", ["prefix_", token.StringToken("str")]),
                     "_",
                     token.IntToken("int"),
                 ],
@@ -125,7 +129,7 @@ class TestTemplate(object):
         assert t.format(fields) == expected
 
     def test_format_error(self):
-        t = template.Template("name", [token.AlphaToken("str"), "_", 1])
+        t = template.Template("name", [token.StringToken("str"), "_", 1])
 
         # 1 is an invalid segment
         with pytest.raises(TypeError):
@@ -133,7 +137,7 @@ class TestTemplate(object):
 
     def test_format_missing_token_error(self):
         t = template.Template(
-            "name", [token.AlphaToken("str"), "_", token.IntToken("int")]
+            "name", [token.StringToken("str"), "_", token.IntToken("int")]
         )
 
         with pytest.raises(exceptions.MissingTokenError) as exc_info:
@@ -149,7 +153,7 @@ class TestTemplate(object):
         [
             (["abc", token.IntToken("int"), "def"], "abc1def", {"int": 1}),
             (
-                [token.AlphaToken("str"), "_", token.IntToken("int")],
+                [token.StringToken("str"), "_", token.IntToken("int")],
                 "word_30",
                 {"int": 30, "str": "word"},
             ),
@@ -158,7 +162,7 @@ class TestTemplate(object):
             # Child template
             (
                 [
-                    template.Template("child", ["prefix_", token.AlphaToken("str")]),
+                    template.Template("child", ["prefix_", token.StringToken("str")]),
                     "_",
                     token.IntToken("int"),
                 ],
@@ -172,7 +176,7 @@ class TestTemplate(object):
         assert t.parse(string) == expected
 
     def test_parse_invalid_string_error(self):
-        t = template.Template("name", [token.AlphaToken("str"), token.IntToken("int")])
+        t = template.Template("name", [token.StringToken("str"), token.IntToken("int")])
 
         # Inverted order
         with pytest.raises(exceptions.ParseError):
@@ -189,32 +193,40 @@ class TestTemplate(object):
     def test_parse_token_conflict_error(self):
         t = template.Template(
             "name",
-            [token.AlphaToken("str"), token.IntToken("int"), token.AlphaToken("str")],
+            [token.StringToken("str"), token.IntToken("int"), token.StringToken("str")],
         )
 
         # Both tokens called "str" must have the same value
-        with pytest.raises(exceptions.TokenConflictError) as exc_info:
+        with pytest.raises(exceptions.ParseError):
             t.parse("abc1def")
 
-        assert exc_info.value.token_name == "str"
-        assert exc_info.value.values == ["abc", "def"]
-
     @pytest.mark.parametrize(
-        "segments, expected",
+        "segments, formatters, expected",
         [
             (
-                ["abc_", token.IntToken("int"), ".def.", token.AlphaToken("str")],
+                ["abc_", token.IntToken("int", format_string="03"), ".def.", token.StringToken("str")],
+                False,
                 "abc_{int}.def.{str}",
             ),
             (
-                [token.AlphaToken("str"), "_", template.Template("template", ["v", token.IntToken("int")])],
+                ["abc_", token.IntToken("int", format_string="03"), ".def.", token.StringToken("str")],
+                True,
+                "abc_{int:03d}.def.{str:s}",
+            ),
+            (
+                [
+                    token.StringToken("str"),
+                    "_",
+                    template.Template("template", ["v", token.IntToken("int")]),
+                ],
+                False,
                 "{str}_v{int}",
             ),
         ],
     )
-    def test_pattern(self, segments, expected):
+    def test_pattern(self, segments, formatters, expected):
         t = template.Template("name", segments)
-        assert t.pattern() == expected
+        assert t.pattern(formatters=formatters) == expected
 
     def test_pattern_error(self):
         t = template.Template("name", ["abc_", token.IntToken("int"), ".def.", 1])
@@ -222,15 +234,26 @@ class TestTemplate(object):
         with pytest.raises(TypeError):
             t.pattern()
 
-    def test_regex(self):
-        t = template.Template(
-            "name", ["abc_", token.IntToken("int"), ".def.", token.AlphaToken("str")]
-        )
-        assert t.regex() == r"abc_[0-9]+\.def\.[a-zA-Z]+"
+    @pytest.mark.parametrize(
+        "segments, expected",
+        [
+            (
+                ["abc_", token.IntToken("int"), ".def.", token.StringToken("str")],
+                r"abc_(?P<int>[0-9]+)\.def\.(?P<str>[a-zA-Z]+)",
+            ),
+            (
+                [token.IntToken("int"), "_", token.IntToken("int")],
+                r"(?P<int>[0-9]+)_(?P=int)",
+            ),
+        ],
+    )
+    def test_regex(self, segments, expected):
+        t = template.Template("name", segments)
+        assert t.regex() == expected
 
     def test_templates(self):
         # No template segments should return an empty list
-        t1 = template.Template("t1", ["abc", token.AlphaToken("str")])
+        t1 = template.Template("t1", ["abc", token.StringToken("str")])
         assert t1.templates(local_only=True) == []
         assert t1.templates(local_only=False) == []
 
@@ -250,7 +273,7 @@ class TestTemplate(object):
         assert t4.templates(local_only=False) == [t3, t2, t1, t1]
 
     def test_tokens(self):
-        s_token = token.AlphaToken("str")
+        s_token = token.StringToken("str")
         i_token = token.IntToken("int")
 
         # No token segments should return an empty list

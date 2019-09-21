@@ -122,10 +122,8 @@ class TemplateResolver(object):
         token_regex = token_data.get(constants.KEY_REGEX)
         if token_type == constants.TokenType.Int:
             token_cls = token.IntToken
-        elif token_type == constants.TokenType.Alpha:
-            token_cls = token.AlphaToken
-        elif token_type == constants.TokenType.AlphaNum:
-            token_cls = token.AlphaNumToken
+        elif token_type == constants.TokenType.String:
+            token_cls = token.StringToken
         elif token_type == constants.TokenType.Custom:
             if not token_regex:
                 raise exceptions.ResolverError(
