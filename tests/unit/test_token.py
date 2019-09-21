@@ -47,6 +47,11 @@ class TestIntToken(object):
         with pytest.raises(exceptions.FormatError):
             t.format("123")
 
+        t = token.IntToken("name", format_string="03")
+        assert t.format(12) == "012"
+        assert t.format(123) == "123"
+        assert t.format(1234) == "1234"
+
     @pytest.mark.parametrize("format_string, expected", [("", "d"), ("03", "03d")])
     def test_format_string(self, format_string, expected):
         t = token.IntToken("name", "[a-z]", format_string=format_string)
@@ -70,6 +75,9 @@ class TestStringToken(object):
 
         with pytest.raises(exceptions.FormatError):
             t.format(123)
+
+        t = token.StringToken("name", format_string="x>6")
+        assert t.format("abcd") == "xxabcd"
 
     @pytest.mark.parametrize("format_string, expected", [("", "s"), ("<10", "<10s")])
     def test_format_string(self, format_string, expected):
