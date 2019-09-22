@@ -17,4 +17,4 @@ REGEX_INT = "[0-9]"
 REGEX_STR = "[a-zA-Z]"
 
 SYMBOL_PATH_TEMPLATE = "@"
-TOKEN_PATTERN = "{{({})?(\w+)}}".format(SYMBOL_PATH_TEMPLATE)
+TOKEN_PATTERN = r"{(\W)?(\w+)}"

@@ -226,20 +226,3 @@ class Template(object):
             for token_obj in self.tokens()
         }
         return fields, match.end()
-
-
-if __name__ == "__main__":
-    template = Template(
-        "name",
-        [
-            "/root/",
-            token.StringToken("one"),
-            "/v",
-            token.IntToken("two"),
-            token.StringToken("one"),
-        ],
-    )
-    fields = template.parse("/root/word/v2word")
-    print(fields)
-    path = template.format({"one": "abc", "two": 3})
-    print(path)

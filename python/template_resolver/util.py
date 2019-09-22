@@ -1,3 +1,6 @@
+from template_resolver import exceptions
+
+
 def get_regex_padding(padmin=None, padmax=None):
     """
     Gets a regex pattern for enforcing padding size on other patterns. Defaults
@@ -11,6 +14,10 @@ def get_regex_padding(padmin=None, padmax=None):
         str: Regex padding symbol(s) to append to a regex pattern
     """
     if padmin is not None and padmax is not None:
+        if padmax < padmin:
+            raise exceptions.ResolverError(
+                "Padmax ({}) cannot be lower than padmin ({})".format(padmax, padmin)
+            )
         padding_str = "{%d,%d}" % (padmin, padmax)
     elif padmin is not None:
         padding_str = "{%d,}" % padmin
@@ -19,16 +26,3 @@ def get_regex_padding(padmin=None, padmax=None):
     else:
         padding_str = "+"
     return padding_str
-
-
-def get_format_spec(padchar, padalign, padmin):
-    """
-    Args:
-        padchar (str): Symbol to pad with
-        padalign (str): Symbol to use for alignment
-        padmin (int): minimum number of characters required
-
-    Returns:
-        str: Python format spec
-    """
-    return "{}{}{}".format(padchar, padalign, padmin)

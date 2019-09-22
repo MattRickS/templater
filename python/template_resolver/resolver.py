@@ -56,8 +56,8 @@ class TemplateResolver(object):
                 objects
         """
         # Must be created before the dict comprehension
-        self._templates = {t.name: t for t in tokens or ()}
-        self._tokens = {t.name: t for t in templates or ()}
+        self._templates = {t.name: t for t in templates or ()}
+        self._tokens = {t.name: t for t in tokens or ()}
 
     def create_template(self, template_name, template_string, config=None):
         """
@@ -80,7 +80,7 @@ class TemplateResolver(object):
         """
         if template_name in self._templates:
             raise exceptions.ResolverError(
-                "Template {!r} already exists".format(template_name)
+                "Template '{}' already exists".format(template_name)
             )
 
         index = 0
@@ -95,16 +95,14 @@ class TemplateResolver(object):
             # Find the matching referenced object
             symbol, name = match.groups()
             if symbol == constants.SYMBOL_PATH_TEMPLATE:
-                template_obj = self._templates.get(name)
-                if template_obj is None:
-                    ref_string = config.get(name)
-                    if ref_string is None:
-                        raise exceptions.ResolverError(
-                            "Template {!r} required by {!r} does not exist".format(
-                                name, template_name
-                            )
-                        )
-                    template_obj = self.create_template(name, ref_string, config=config)
+                try:
+                    template_obj = self.get_template(name)
+                except exceptions.ResolverError:
+                    if config is None or name not in config:
+                        raise
+                    template_obj = self.create_template(
+                        name, config[name], config=config
+                    )
                 segments.append(template_obj)
             elif not symbol:
                 token_obj = self.get_token(name)
@@ -133,7 +131,7 @@ class TemplateResolver(object):
         """
         if token_name in self._tokens:
             raise exceptions.ResolverError(
-                "Token {!r} already exists".format(token_name)
+                "Token '{}' already exists".format(token_name)
             )
 
         token_type = token_config[constants.KEY_TYPE]
@@ -159,7 +157,7 @@ class TemplateResolver(object):
         template_obj = self._templates.get(name)
         if template_obj is None:
             raise exceptions.ResolverError(
-                "Referenced template name does not exist: {}".format(name)
+                "Requested template name does not exist: {}".format(name)
             )
         return template_obj
 
@@ -177,7 +175,7 @@ class TemplateResolver(object):
         token_obj = self._tokens.get(name)
         if token_obj is None:
             raise exceptions.ResolverError(
-                "Referenced template name does not exist: {}".format(name)
+                "Requested token name does not exist: {}".format(name)
             )
         return token_obj
 

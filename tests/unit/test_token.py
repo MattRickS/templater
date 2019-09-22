@@ -51,6 +51,10 @@ class TestToken(object):
         t = token.Token("name", "[a-zA-Z]+", "")
         assert t.regex() == "[a-zA-Z]+"
 
+    def test_value_from_parsed_string(self):
+        t = token.Token("name", "[a-z]+", "s")
+        assert t.value_from_parsed_string("abc") == "abc"
+
 
 class TestIntToken(object):
     @pytest.mark.parametrize("config, expected", [({}, "d"), ({"padmin": 3}, "0=3d")])
@@ -84,6 +88,13 @@ class TestIntToken(object):
         with pytest.raises(exceptions.ParseError):
             t.parse("12a")
 
+    def test_value_from_parsed_string(self):
+        t = token.IntToken("name")
+        assert t.value_from_parsed_string("123") == 123
+
+        with pytest.raises(exceptions.ParseError):
+            t.value_from_parsed_string("abc")
+
 
 class TestStringToken(object):
     @pytest.mark.parametrize("config, expected", [({}, "s"), ({"padmin": 3}, "X>3s")])
@@ -114,3 +125,7 @@ class TestStringToken(object):
     def test_parse(self):
         t = token.StringToken("name")
         assert t.parse("abc") == "abc"
+
+    def test_value_from_parsed_string(self):
+        t = token.StringToken("name")
+        assert t.value_from_parsed_string("abc") == "abc"

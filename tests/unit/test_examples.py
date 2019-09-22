@@ -1,4 +1,6 @@
-from template_resolver import resolver, template, token
+import pytest
+
+from template_resolver import exceptions, resolver, template, token
 
 
 def test_template():
@@ -102,6 +104,12 @@ def test_resolver():
     )
     assert repr(t_resolver.get_token("str")) == "StringToken('str', '[a-zA-Z]+', 's')"
     assert repr(t_resolver.get_token("int")) == "IntToken('int', '[0-9]+', 'd')"
+
+    lower_case_token = t_resolver.get_token("lowerCase")
+    assert lower_case_token.format("abcDef") == "abcDef"
+    with pytest.raises(exceptions.FormatError):
+        lower_case_token.format("AbcDef")
+
     assert t_resolver.get_template("root").pattern() == "{str}_{int}"
     assert t_resolver.get_template("parent").pattern() == "{str}_{int}_{str}"
     assert (

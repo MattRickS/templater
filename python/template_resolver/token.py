@@ -25,7 +25,7 @@ class Token(object):
             else:
                 padalign = config.get("padalign", cls.PADALIGN)
                 padchar = config.get("padchar", cls.PADCHAR)
-                format_spec = util.get_format_spec(padchar, padalign, padmin)
+                format_spec = "".join((padchar, padalign, str(padmin)))
 
         return format_spec
 
