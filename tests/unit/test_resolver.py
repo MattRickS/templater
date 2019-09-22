@@ -25,13 +25,21 @@ def test_from_config(mock_token_module, mock_template_module):
     )
     str_token = mock_token_module.StringToken("str")
     int_token = mock_token_module.IntToken("int")
-    int_pad_token = mock_token_module.IntToken("int_pad", regex="[0-9]{3,}", format_spec="0=3d")
+    int_pad_token = mock_token_module.IntToken(
+        "int_pad", regex="[0-9]{3,}", format_spec="0=3d"
+    )
     lower_case_token = mock_token_module.StringToken("lowerCase", "[a-z][a-zA-Z]+", "")
 
     root_template = mock_template_module.Template("root", [str_token, "_", int_token])
-    parent_template = mock_template_module.Template("parent", [root_template, "_", str_token])
-    example_template = mock_template_module.Template("example", [lower_case_token, "_", int_token])
-    name_template = mock_template_module.Template("name", [root_template, "_", int_pad_token])
+    parent_template = mock_template_module.Template(
+        "parent", [root_template, "_", str_token]
+    )
+    example_template = mock_template_module.Template(
+        "example", [lower_case_token, "_", int_token]
+    )
+    name_template = mock_template_module.Template(
+        "name", [root_template, "_", int_pad_token]
+    )
 
     assert resolver_obj._tokens == {
         "str": str_token,
@@ -56,13 +64,14 @@ def test_get_token_cls():
 
 
 @pytest.mark.parametrize(
-    "tokens, templates, template_name, template_string, expected",
+    "tokens, templates, template_name, template_string, config, expected",
     [
         (
             [token.StringToken("str"), token.IntToken("int")],
             [],
             "name",
             "/abc/{str}/{int}",
+            None,
             template.Template(
                 "name", ["/abc/", token.StringToken("str"), "/", token.IntToken("int")]
             ),
@@ -72,6 +81,7 @@ def test_get_token_cls():
             [template.Template("root", ["/root/", token.IntToken("int")])],
             "name",
             "{@root}/{str}",
+            None,
             template.Template(
                 "name",
                 [
@@ -81,11 +91,29 @@ def test_get_token_cls():
                 ],
             ),
         ),
+        (
+            [token.StringToken("str"), token.IntToken("int")],
+            [],
+            "name",
+            "{@prefix}{str}",
+            {"prefix": "{int}_"},
+            template.Template(
+                "name",
+                [
+                    template.Template("prefix", [token.IntToken("int"), "_"]),
+                    token.StringToken("str"),
+                ],
+            ),
+        ),
     ],
 )
-def test_create_template(tokens, templates, template_name, template_string, expected):
+def test_create_template(
+    tokens, templates, template_name, template_string, config, expected
+):
     resolver_obj = resolver.TemplateResolver(tokens=tokens, templates=templates)
-    template_obj = resolver_obj.create_template(template_name, template_string)
+    template_obj = resolver_obj.create_template(
+        template_name, template_string, config=config
+    )
     assert repr(template_obj) == repr(expected)
     assert template_name in resolver_obj._templates
     assert resolver_obj._templates[template_name] == template_obj

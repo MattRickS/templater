@@ -112,6 +112,11 @@ class TemplateResolver(object):
                     "Unknown token symbol: {}".format(symbol)
                 )
 
+        # If it ends with a fixed string, ensure the remainder is added
+        last_string_segment = template_string[index:]
+        if last_string_segment:
+            segments.append(last_string_segment)
+
         template_obj = template.Template(template_name, segments)
         self._templates[template_name] = template_obj
         return template_obj
