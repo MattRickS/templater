@@ -102,16 +102,22 @@ class TestTemplate(object):
         assert t.fixed_strings(local_only=local_only) == expected
 
     @pytest.mark.parametrize(
-        "segments, fields, expected",
+        "segments, fields, wildcards, expected",
         [
-            (["abc", token.IntToken("int"), "def"], {"int": 1}, "abc1def"),
+            (["abc", token.IntToken("int"), "def"], {"int": 1}, None, "abc1def"),
             (
                 [token.StringToken("str"), "_", token.IntToken("int")],
                 {"int": 30, "str": "word"},
+                None,
                 "word_30",
             ),
             # Duplicates of a token should use the same value
-            ([token.IntToken("int"), "_", token.IntToken("int")], {"int": 1}, "1_1"),
+            (
+                [token.IntToken("int"), "_", token.IntToken("int")],
+                {"int": 1},
+                None,
+                "1_1",
+            ),
             # Child template
             (
                 [
@@ -120,13 +126,21 @@ class TestTemplate(object):
                     token.IntToken("int"),
                 ],
                 {"str": "word", "int": 1},
+                None,
                 "prefix_word_1",
             ),
+            # Wildcards
+            (
+                [token.IntToken("int"), "_", token.StringToken("str")],
+                {"str": "word"},
+                ["int"],
+                "*_word"
+            )
         ],
     )
-    def test_format(self, segments, fields, expected):
+    def test_format(self, segments, fields, wildcards, expected):
         t = template.Template("name", segments)
-        assert t.format(fields) == expected
+        assert t.format(fields, wildcards=wildcards) == expected
 
     def test_format_error(self):
         t = template.Template("name", [token.StringToken("str"), "_", 1])

@@ -1,7 +1,7 @@
 import re
 import six
 
-from template_resolver import exceptions, token
+from template_resolver import constants, exceptions, token
 
 
 class Template(object):
@@ -62,7 +62,7 @@ class Template(object):
             if isinstance(segment, six.string_types)
         ]
 
-    def format(self, fields):
+    def format(self, fields, wildcards=None):
         """
         Raises:
             exceptions.FormatError: If the fields don't match the template
@@ -71,9 +71,14 @@ class Template(object):
             fields (dict): Dictionary of fields to format the template with,
                 must match tokens
 
+        Keyword Args:
+            wildcards (list[str]): List of field names to skip formatting and
+                use a wildcard symbol for
+
         Returns:
             str: Formatted template string
         """
+        wildcards = wildcards or []
         segments = []
         for segment in self._segments:
             if isinstance(segment, six.string_types):
@@ -81,9 +86,12 @@ class Template(object):
             elif isinstance(segment, Template):
                 string_segment = segment.format(fields)
             elif isinstance(segment, token.Token):
-                if segment.name not in fields:
+                if segment.name in wildcards:
+                    string_segment = constants.SYMBOL_WILDCARD
+                elif segment.name not in fields:
                     raise exceptions.MissingTokenError(segment.name)
-                string_segment = segment.format(fields[segment.name])
+                else:
+                    string_segment = segment.format(fields[segment.name])
             else:
                 raise TypeError("Unknown segment type: {}".format(segment))
             segments.append(string_segment)

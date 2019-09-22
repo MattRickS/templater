@@ -17,4 +17,5 @@ REGEX_INT = "[0-9]"
 REGEX_STR = "[a-zA-Z]"
 
 SYMBOL_PATH_TEMPLATE = "@"
+SYMBOL_WILDCARD = "*"
 TOKEN_PATTERN = r"{(\W)?(\w+)}"
