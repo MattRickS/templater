@@ -124,11 +124,13 @@ class Template(object):
                 string_segment = segment
             elif isinstance(segment, token.Token):
                 if formatters:
-                    string_segment = "{{{}:{}}}".format(segment.name, segment.format_spec)
+                    string_segment = "{{{}:{}}}".format(
+                        segment.name, segment.format_spec
+                    )
                 else:
                     string_segment = "{{{}}}".format(segment.name)
             elif isinstance(segment, Template):
-                string_segment = segment.pattern()
+                string_segment = segment.pattern(formatters=formatters)
             else:
                 raise TypeError("Unknown segment type: {}".format(segment))
             segments.append(string_segment)
@@ -218,7 +220,9 @@ class Template(object):
         string_fields = match.groupdict()
         # Convert the string value to the token type
         fields = {
-            token_obj.name: token_obj.to_value(string_fields[token_obj.name])
+            token_obj.name: token_obj.value_from_parsed_string(
+                string_fields[token_obj.name]
+            )
             for token_obj in self.tokens()
         }
         return fields, match.end()

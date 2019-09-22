@@ -89,19 +89,25 @@ def test_resolver():
             "tokens": {
                 "str": "str",
                 "int": "int",
+                "int_pad": {"type": "int", "padmin": 3},
                 "lowerCase": {"type": "str", "regex": "[a-z][a-zA-Z]+"},
             },
             "templates": {
                 "root": "{str}_{int}",
                 "parent": "{@root}_{str}",
                 "example": "{lowerCase}_{int}",
+                "name": "{@root}_{int_pad}",
             },
         }
     )
-    assert repr(t_resolver.get_token("str")) == "StringToken('str', '[a-zA-Z]+')"
-    assert repr(t_resolver.get_token("int")) == "IntToken('int', '[0-9]+')"
+    assert repr(t_resolver.get_token("str")) == "StringToken('str', '[a-zA-Z]+', 's')"
+    assert repr(t_resolver.get_token("int")) == "IntToken('int', '[0-9]+', 'd')"
     assert t_resolver.get_template("root").pattern() == "{str}_{int}"
     assert t_resolver.get_template("parent").pattern() == "{str}_{int}_{str}"
+    assert (
+        t_resolver.get_template("name").pattern(formatters=True)
+        == "{str:s}_{int:d}_{int_pad:0=3d}"
+    )
     assert (
         t_resolver.get_template("parent").format({"int": 50, "str": "abc"})
         == "abc_50_abc"

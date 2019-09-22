@@ -204,12 +204,22 @@ class TestTemplate(object):
         "segments, formatters, expected",
         [
             (
-                ["abc_", token.IntToken("int", format_spec="03"), ".def.", token.StringToken("str")],
+                [
+                    "abc_",
+                    token.IntToken("int", format_spec="03d"),
+                    ".def.",
+                    token.StringToken("str"),
+                ],
                 False,
                 "abc_{int}.def.{str}",
             ),
             (
-                ["abc_", token.IntToken("int", format_spec="03"), ".def.", token.StringToken("str")],
+                [
+                    "abc_",
+                    token.IntToken("int", format_spec="03d"),
+                    ".def.",
+                    token.StringToken("str"),
+                ],
                 True,
                 "abc_{int:03d}.def.{str:s}",
             ),

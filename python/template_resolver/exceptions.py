@@ -16,16 +16,5 @@ class ParseError(Exception):
     """ Errors with parsing a string into values """
 
 
-class TokenConflictError(ParseError):
-    """ Errors raised when multiple tokens conflict """
-
-    def __init__(self, token_name, values):
-        super(TokenConflictError, self).__init__(
-            "Mismatched values found for {!r}: {}".format(token_name, values)
-        )
-        self.token_name = token_name
-        self.values = values
-
-
 class ResolverError(Exception):
     """ Errors raised with the TemplateResolver construction """

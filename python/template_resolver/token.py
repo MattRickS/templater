@@ -127,7 +127,7 @@ class Token(object):
                 "String '{}' does not match token {!r}".format(string, self)
             )
 
-        value = self.to_value(string)
+        value = self.value_from_parsed_string(string)
         return value
 
     def regex(self):
@@ -137,7 +137,7 @@ class Token(object):
         """
         return self._pattern.pattern[1:-1]
 
-    def to_value(self, string):
+    def value_from_parsed_string(self, string):
         """
         Args:
             string (str): String to be converted to the token's value
@@ -153,7 +153,19 @@ class IntToken(Token):
     PADCHAR = constants.DEFAULT_PADCHAR_INT
     REGEX = constants.REGEX_INT
 
-    def __init__(self, name, regex=REGEX + "+", format_spec=""):
+    @classmethod
+    def get_format_spec_from_config(cls, config):
+        """
+        Args:
+            config (dict): Dictionary of token configuration values
+
+        Returns:
+            str: Format spec for the token with the integer "d" appended
+        """
+        format_spec = super(IntToken, cls).get_format_spec_from_config(config)
+        return format_spec + "d"
+
+    def __init__(self, name, regex=REGEX + "+", format_spec="d"):
         """
         Args:
             name (str): Name of the token
@@ -161,13 +173,11 @@ class IntToken(Token):
         Keyword Args:
             regex (str): Regex pattern for the string. Defaults to integer
                 characters only
-            format_spec (str): Python format string to use when formatting,
-                should not include the 'd' for integer
-
+            format_spec (str): Python format string to use when formatting.
         """
-        super(IntToken, self).__init__(name, regex, format_spec + "d")
+        super(IntToken, self).__init__(name, regex, format_spec)
 
-    def to_value(self, string):
+    def value_from_parsed_string(self, string):
         """
         Args:
             string (str): String value
@@ -188,7 +198,19 @@ class StringToken(Token):
     PADCHAR = constants.DEFAULT_PADCHAR_STR
     REGEX = constants.REGEX_STR
 
-    def __init__(self, name, regex=REGEX + "+", format_spec=""):
+    @classmethod
+    def get_format_spec_from_config(cls, config):
+        """
+        Args:
+            config (dict): Dictionary of token configuration values
+
+        Returns:
+            str: Format spec for the token with the string "s" appended
+        """
+        format_spec = super(StringToken, cls).get_format_spec_from_config(config)
+        return format_spec + "s"
+
+    def __init__(self, name, regex=REGEX + "+", format_spec="s"):
         """
         Args:
             name (str): Name of the token
@@ -197,4 +219,4 @@ class StringToken(Token):
             regex (str): Regex pattern for the string. Defaults to alphabetical
                 characters only
         """
-        super(StringToken, self).__init__(name, regex, format_spec + "s")
+        super(StringToken, self).__init__(name, regex, format_spec)

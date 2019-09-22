@@ -4,6 +4,19 @@ from template_resolver import exceptions, token
 
 
 class TestToken(object):
+    @pytest.mark.parametrize(
+        "config, expected",
+        [
+            ({}, ""),
+            ({"format_spec": "<10"}, "<10"),
+            ({"padmax": 3}, ""),
+            ({"padmin": 3}, "0>3"),
+            ({"padmin": 5, "padalign": "^", "padchar": "a"}, "a^5"),
+        ],
+    )
+    def test_get_format_spec_from_config(self, config, expected):
+        assert token.Token.get_format_spec_from_config(config) == expected
+
     def test_repr(self):
         t = token.Token("name", "[a-zA-Z]+", "")
         assert repr(t) == "Token('name', '[a-zA-Z]+', '')"
@@ -40,6 +53,10 @@ class TestToken(object):
 
 
 class TestIntToken(object):
+    @pytest.mark.parametrize("config, expected", [({}, "d"), ({"padmin": 3}, "0=3d")])
+    def test_get_format_spec_from_config(self, config, expected):
+        assert token.IntToken.get_format_spec_from_config(config) == expected
+
     def test_format(self):
         t = token.IntToken("name")
         assert t.format(123) == "123"
@@ -52,10 +69,13 @@ class TestIntToken(object):
         assert t.format(123) == "123"
         assert t.format(1234) == "1234"
 
-    @pytest.mark.parametrize("format_spec, expected", [("", "d"), ("03", "03d")])
-    def test_format_string(self, format_spec, expected):
-        t = token.IntToken("name", "[a-z]", format_spec=format_spec)
-        assert t.format_spec == expected
+    def test_format_spec(self):
+        t = token.IntToken("name")
+        assert t.format_spec == "d"
+
+        # Whatever's passed in should remain unmodified
+        t = token.IntToken("name", format_spec="03")
+        assert t.format_spec == "03"
 
     def test_parse(self):
         t = token.IntToken("name")
@@ -66,6 +86,10 @@ class TestIntToken(object):
 
 
 class TestStringToken(object):
+    @pytest.mark.parametrize("config, expected", [({}, "s"), ({"padmin": 3}, "X>3s")])
+    def test_get_format_spec_from_config(self, config, expected):
+        assert token.StringToken.get_format_spec_from_config(config) == expected
+
     def test_format(self):
         t = token.StringToken("name")
         assert t.format("abc") == "abc"
@@ -79,10 +103,13 @@ class TestStringToken(object):
         t = token.StringToken("name", format_spec="x>6")
         assert t.format("abcd") == "xxabcd"
 
-    @pytest.mark.parametrize("format_spec, expected", [("", "s"), ("<10", "<10s")])
-    def test_format_string(self, format_spec, expected):
-        t = token.StringToken("name", "[a-z]", format_spec=format_spec)
-        assert t.format_spec == expected
+    def test_format_spec(self):
+        t = token.StringToken("name")
+        assert t.format_spec == "s"
+
+        # Whatever's passed in should remain unmodified
+        t = token.StringToken("name", "[a-z]", format_spec="^10")
+        assert t.format_spec == "^10"
 
     def test_parse(self):
         t = token.StringToken("name")
