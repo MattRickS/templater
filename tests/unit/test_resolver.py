@@ -1,7 +1,7 @@
 import mock
 import pytest
 
-from template_resolver import exceptions, resolver, template, token
+from template_resolver import exceptions, pathtemplate, resolver, template, token
 
 
 @mock.patch("template_resolver.resolver.template")
@@ -55,6 +55,16 @@ def test_from_config(mock_token_module, mock_template_module):
     }
 
 
+def test_get_template_cls():
+    assert resolver.TemplateResolver.get_template_cls("template") == template.Template
+    assert (
+        resolver.TemplateResolver.get_template_cls("path") == pathtemplate.PathTemplate
+    )
+
+    with pytest.raises(exceptions.ResolverError):
+        resolver.TemplateResolver.get_template_cls("unknown")
+
+
 def test_get_token_cls():
     assert resolver.TemplateResolver.get_token_cls("int") == token.IntToken
     assert resolver.TemplateResolver.get_token_cls("str") == token.StringToken
@@ -64,13 +74,13 @@ def test_get_token_cls():
 
 
 @pytest.mark.parametrize(
-    "tokens, templates, template_name, template_string, config, expected",
+    "tokens, templates, template_name, template_data, reference_config, expected",
     [
         (
             [token.StringToken("str"), token.IntToken("int")],
             [],
             "name",
-            "/abc/{str}/{int}",
+            {"string": "/abc/{str}/{int}", "type": "template"},
             None,
             template.Template(
                 "name", ["/abc/", token.StringToken("str"), "/", token.IntToken("int")]
@@ -80,7 +90,7 @@ def test_get_token_cls():
             [token.StringToken("str"), token.IntToken("int")],
             [template.Template("root", ["/root/", token.IntToken("int")])],
             "name",
-            "{@root}/{str}",
+            {"string": "{@root}/{str}", "type": "template"},
             None,
             template.Template(
                 "name",
@@ -95,9 +105,9 @@ def test_get_token_cls():
             [token.StringToken("str"), token.IntToken("int")],
             [],
             "name",
-            "{@prefix}{str}",
-            {"prefix": "{int}_"},
-            template.Template(
+            {"string": "{@prefix}{str}", "type": "path"},
+            {"prefix": {"string": "{int}_", "type": "template"}},
+            pathtemplate.PathTemplate(
                 "name",
                 [
                     template.Template("prefix", [token.IntToken("int"), "_"]),
@@ -108,11 +118,11 @@ def test_get_token_cls():
     ],
 )
 def test_create_template(
-    tokens, templates, template_name, template_string, config, expected
+    tokens, templates, template_name, template_data, reference_config, expected
 ):
     resolver_obj = resolver.TemplateResolver(tokens=tokens, templates=templates)
     template_obj = resolver_obj.create_template(
-        template_name, template_string, config=config
+        template_name, template_data, reference_config=reference_config
     )
     assert repr(template_obj) == repr(expected)
     assert template_name in resolver_obj._templates
@@ -124,28 +134,30 @@ def test_create_template__template_exists():
         templates=[template.Template("name", ["string"])]
     )
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", "/root/{str}")
+        resolver_obj.create_template(
+            "name", {"string": "/root/{str}", "type": "template"}
+        )
     assert str(exc_info.value) == "Template 'name' already exists"
 
 
 def test_create_template__missing_token():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", "/root/{str}")
+        resolver_obj.create_template("name", {"string": "/root/{str}", "type": "template"})
     assert str(exc_info.value) == "Requested token name does not exist: str"
 
 
 def test_create_template__missing_template():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", "/root/{@template}")
+        resolver_obj.create_template("name", {"string": "/root/{@template}", "type": "template"})
     assert str(exc_info.value) == "Requested template name does not exist: template"
 
 
 def test_create_template__invalid_symbol():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", "/root/{!str}")
+        resolver_obj.create_template("name", {"string": "/root/{!str}", "type": "template"})
     assert str(exc_info.value) == "Unknown token symbol: !"
 
 

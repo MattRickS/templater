@@ -1,6 +1,6 @@
 import re
 
-from template_resolver import constants, exceptions, template, token
+from template_resolver import constants, exceptions, pathtemplate, template, token
 
 
 class TemplateResolver(object):
@@ -15,6 +15,9 @@ class TemplateResolver(object):
         """
         token_config = config[constants.KEY_TOKENS]
         template_config = config[constants.KEY_TEMPLATES]
+        default_template_type = config.get(
+            constants.KEY_DEFAULT_TEMPLATE_TYPE, constants.TemplateType.Standard
+        )
 
         resolver_obj = cls()
 
@@ -23,12 +26,39 @@ class TemplateResolver(object):
                 token_data = {constants.KEY_TYPE: token_data}
             resolver_obj.create_token(token_name, token_data)
 
-        for name, string in template_config.items():
+        for name, template_data in template_config.items():
             # Referenced templates may be already loaded by parent templates
             if not resolver_obj.has_template(name):
-                resolver_obj.create_template(name, string, config=template_config)
+                if isinstance(template_data, str):
+                    template_data = {
+                        constants.KEY_TYPE: default_template_type,
+                        constants.KEY_STRING: template_data,
+                    }
+                resolver_obj.create_template(
+                    name, template_data, reference_config=template_config
+                )
 
         return resolver_obj
+
+    @classmethod
+    def get_template_cls(cls, template_type):
+        """
+        Args:
+            template_type (str): String name of the template type
+
+        Returns:
+            Type[token.Template]: Template class the name represents
+        """
+        if template_type == constants.TemplateType.Standard:
+            token_cls = template.Template
+        elif template_type == constants.TemplateType.Path:
+            token_cls = pathtemplate.PathTemplate
+        else:
+            raise exceptions.ResolverError(
+                "Unknown template type: {}".format(template_type)
+            )
+
+        return token_cls
 
     @classmethod
     def get_token_cls(cls, token_type):
@@ -59,7 +89,7 @@ class TemplateResolver(object):
         self._templates = {t.name: t for t in templates or ()}
         self._tokens = {t.name: t for t in tokens or ()}
 
-    def create_template(self, template_name, template_string, config=None):
+    def create_template(self, template_name, template_config, reference_config=None):
         """
         Raises:
             exceptions.ResolverError: If the template string references a
@@ -67,13 +97,14 @@ class TemplateResolver(object):
 
         Args:
             template_name (str): Name of the template to create
-            template_string (str): String representing the template
+            template_config (dict): Dictionary of template data with a minimum
+                of a "type" and "string" key
 
         Keyword Args:
-            config (dict): Dictionary of template names mapped to template
-                strings. If creating a template which references additional
-                templates that does not exist yet, the resolver will try to
-                recursively construct templates from the config.
+            reference_config (dict): Dictionary of template names mapped to
+                template configs. If creating a template which references
+                additional templates that does not exist yet, the resolver will
+                try to recursively construct templates from this config.
 
         Returns:
             template.Template: Created template object stored in the resolver
@@ -82,6 +113,9 @@ class TemplateResolver(object):
             raise exceptions.ResolverError(
                 "Template '{}' already exists".format(template_name)
             )
+
+        template_type = template_config[constants.KEY_TYPE]
+        template_string = template_config[constants.KEY_STRING]
 
         index = 0
         segments = []
@@ -94,14 +128,14 @@ class TemplateResolver(object):
 
             # Find the matching referenced object
             symbol, name = match.groups()
-            if symbol == constants.SYMBOL_PATH_TEMPLATE:
+            if symbol == constants.SYMBOL_TEMPLATE:
                 try:
                     template_obj = self.get_template(name)
                 except exceptions.ResolverError:
-                    if config is None or name not in config:
+                    if reference_config is None or name not in reference_config:
                         raise
                     template_obj = self.create_template(
-                        name, config[name], config=config
+                        name, reference_config[name], reference_config=reference_config
                     )
                 segments.append(template_obj)
             elif not symbol:
@@ -117,7 +151,8 @@ class TemplateResolver(object):
         if last_string_segment:
             segments.append(last_string_segment)
 
-        template_obj = template.Template(template_name, segments)
+        template_cls = self.get_template_cls(template_type)
+        template_obj = template_cls(template_name, segments)
         self._templates[template_name] = template_obj
         return template_obj
 
