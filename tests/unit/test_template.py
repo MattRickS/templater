@@ -134,8 +134,8 @@ class TestTemplate(object):
                 [token.IntToken("int"), "_", token.StringToken("str")],
                 {"str": "word"},
                 ["int"],
-                "*_word"
-            )
+                "*_word",
+            ),
         ],
     )
     def test_format(self, segments, fields, wildcards, expected):
@@ -213,6 +213,129 @@ class TestTemplate(object):
         # Both tokens called "str" must have the same value
         with pytest.raises(exceptions.ParseError):
             t.parse("abc1def")
+
+    @pytest.mark.parametrize(
+        "segments, string, expected_fields",
+        [
+            (
+                [
+                    token.StringToken("name"),
+                    "_",
+                    template.Template(
+                        "other", [token.StringToken("word"), "_", token.IntToken("num")]
+                    ),
+                    "_",
+                    token.StringToken("name"),
+                ],
+                "abc_def_1_abc",
+                {"name": "abc", "word": "def", "num": 1},
+            ),
+            ([token.StringToken("name"), "def"], "abcdef", {"name": "abc"}),
+        ],
+    )
+    def test_parse_debug(self, segments, string, expected_fields):
+        t = template.Template("name", segments)
+        assert t.parse_debug(string) == expected_fields
+
+    @pytest.mark.parametrize(
+        "string, expected_cls, expected_char_index, expected_segment_index, expected_fields",
+        [
+            ("1", exceptions.DebugParseError, 0, 0, {}),
+            ("abc", exceptions.DebugParseError, 3, 1, {"name": "abc"}),
+            ("abc_", exceptions.DebugParseError, 4, 2, {"name": "abc"}),
+            (
+                "abc_def1_1",
+                exceptions.DebugParseError,
+                7,
+                3,
+                {"name": "abc", "word": "def"},
+            ),
+            (
+                "abc_def_ghi",
+                exceptions.DebugParseError,
+                8,
+                4,
+                {"name": "abc", "word": "def"},
+            ),
+            (
+                "abc_def_1",
+                exceptions.DebugParseError,
+                9,
+                5,
+                {"name": "abc", "word": "def", "num": 1},
+            ),
+            (
+                "abc_def_1_",
+                exceptions.DebugParseError,
+                10,
+                6,
+                {"name": "abc", "word": "def", "num": 1},
+            ),
+            (
+                "abc_def_1_ghi",
+                exceptions.MismatchTokenError,
+                10,
+                6,
+                {"word": "def", "num": 1},
+            ),
+            (
+                "abc_def_1_abc_ghi",
+                exceptions.ExcessStringError,
+                13,
+                7,
+                {"name": "abc", "word": "def", "num": 1},
+            ),
+        ],
+    )
+    def test_parse_debug_error_1(
+        self,
+        string,
+        expected_cls,
+        expected_char_index,
+        expected_segment_index,
+        expected_fields,
+    ):
+        t = template.Template(
+            "name",
+            [
+                token.StringToken("name"),
+                "_",
+                template.Template(
+                    "other", [token.StringToken("word"), "_", token.IntToken("num")]
+                ),
+                "_",
+                token.StringToken("name"),
+            ],
+        )
+        with pytest.raises(expected_cls) as exc_info:
+            t.parse_debug(string)
+
+        assert exc_info.value.char_index == expected_char_index
+        assert exc_info.value.segment_index == expected_segment_index
+        assert exc_info.value.fields == expected_fields
+
+    @pytest.mark.parametrize(
+        "string, expected_cls, expected_char_index, expected_segment_index, expected_fields",
+        [
+            ("1", exceptions.DebugParseError, 0, 0, {}),
+            ("abc", exceptions.DebugParseError, 3, 1, {"name": "abc"}),
+        ],
+    )
+    def test_parse_debug_error_2(
+        self,
+        string,
+        expected_cls,
+        expected_char_index,
+        expected_segment_index,
+        expected_fields,
+    ):
+        t = template.Template("name", [token.StringToken("name"), "def"])
+        with pytest.raises(expected_cls) as exc_info:
+            t.parse_debug(string)
+
+        assert exc_info.value.char_index == expected_char_index
+        assert exc_info.value.segment_index == expected_segment_index
+        assert exc_info.value.fields == expected_fields
 
     @pytest.mark.parametrize(
         "segments, formatters, expected",

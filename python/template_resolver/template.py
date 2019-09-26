@@ -113,6 +113,90 @@ class Template(object):
         fields, _ = self._parse(regex, string)
         return fields
 
+    def parse_debug(self, string):
+        """
+        Parses the string, but raises more descriptive errors at the cost of
+        extra calculation
+
+        Raises:
+            exceptions.DebugParseError: If the string doesn't match the template
+                exactly
+
+        Args:
+            string (str): String to parse the template tokens from
+
+        Returns:
+            dict: Dictionary of fields extracted from the tokens
+        """
+        segments = self.segments()
+        regexes = [
+            "({})".format(
+                segment if isinstance(segment, six.string_types) else segment.regex()
+            )
+            for segment in segments
+        ]
+        num_segments = len(segments)
+
+        for segment_index in range(num_segments, 0, -1):
+            pattern = "".join(regexes[:segment_index])
+            match = re.match(pattern, string)
+            if match is None:
+                continue
+
+            fields = {}
+            for i, (segment, value) in enumerate(zip(segments, match.groups())):
+                if isinstance(segment, six.string_types):
+                    continue
+
+                # group 0 is the entire string, add one to find the actual group
+                char_index, _ = match.span(i + 1)
+
+                try:
+                    value = segment.value_from_parsed_string(value)
+                except exceptions.ParseError as e:
+                    raise exceptions.DebugParseError(str(e), char_index, i, fields)
+
+                if segment.name in fields and fields[segment.name] != value:
+                    # Remove the invalid field before raising
+                    previous_value = fields.pop(segment.name)
+                    raise exceptions.MismatchTokenError(
+                        "Mismatched values for token {{{}}}: {} != {}".format(
+                            segment.name, previous_value, value
+                        ),
+                        char_index,
+                        i,
+                        fields,
+                    )
+
+                fields[segment.name] = value
+
+            # Matched on the first pattern, ie, the whole template
+            if segment_index == num_segments:
+                start, end = match.span(0)
+                if match.group(0) != string:
+                    raise exceptions.ExcessStringError(
+                        "Template matches string with remainder",
+                        end,
+                        num_segments,
+                        fields,
+                    )
+                return fields
+
+            segment = segments[segment_index]
+            raise exceptions.DebugParseError(
+                "Match fails at segment ({}) {}".format(
+                    segment_index,
+                    "'{}'".format(segment)
+                    if isinstance(segment, six.string_types)
+                    else "{{{}}}".format(segment.name),
+                ),
+                match.end(),
+                segment_index,
+                fields,
+            )
+
+        raise exceptions.DebugParseError("String does not match at all", 0, 0, {})
+
     def pattern(self, formatters=False):
         """
         Raises:
@@ -235,66 +319,6 @@ class Template(object):
         }
         return fields, match.end()
 
-    def debug_parse(self, string):
-        segments = self.segments()
-        names = [
-            None if isinstance(segment, six.string_types) else segment.name
-            for segment in segments
-        ]
-        patterns = [
-            segment if isinstance(segment, six.string_types) else segment.regex()
-            for segment in segments
-        ]
-        patterns.append("$")
-        regex_segments = [
-            "(?=({}))?".format("".join(patterns[: i + 1])) for i in range(len(patterns))
-        ]
-        regex_segments.append(".")
-        regex = "".join(regex_segments)
-        match = re.match(regex, string)
-        fields = {}
-        if match is None:
-            raise DebugParseError("No segments match", -1, None, fields)
-        else:
-            groups = match.groups()
-            print(groups)
-            for index, (name, value) in enumerate(zip(names, groups)):
-                if value is None:
-                    failed_segment = segments[index]
-                    raise DebugParseError(
-                        "Segment ({}) '{}' doesn't match".format(index, failed_segment),
-                        index,
-                        failed_segment,
-                        fields,
-                    )
-                # Values are full string matches. Extract the difference
-                # from the previous value
-                if index > 0:
-                    value = value[len(groups[index - 1]) :]
-
-                if name in fields and fields[name] != value:
-                    raise DebugParseError(
-                        "Duplicate tokens don't match for segment ({}) '{}': "
-                        "'{}' != '{}'".format(
-                            index, name, value, fields[name]
-                        ),
-                        index,
-                        value,
-                        fields,
-                    )
-                if name is not None:
-                    fields[name] = value
-
-        return fields
-
-
-class DebugParseError(exceptions.ParseError):
-    def __init__(self, message, index, segment, fields):
-        super(DebugParseError, self).__init__(message)
-        self.index = index
-        self.segment = segment
-        self.fields = fields
-
 
 if __name__ == "__main__":
     t = Template(
@@ -302,9 +326,7 @@ if __name__ == "__main__":
         [
             token.StringToken("name"),
             "_",
-            token.StringToken("other"),
-            "_",
-            token.IntToken("num"),
+            Template("other", [token.StringToken("word"), "_", token.IntToken("num")]),
             "_",
             token.StringToken("name"),
         ],
@@ -319,30 +341,40 @@ if __name__ == "__main__":
         "abc_def_1_",
         "abc_def_1_ghi",
         "abc_def_1_abc",
+        "abc_def_1_abc_ghi",
     ):
         try:
-            f = t.debug_parse(text)
-        except DebugParseError as e:
-            print(e)
+            f = t.parse_debug(text)
+        except exceptions.DebugParseError as e:
+            print(
+                e,
+                "::",
+                e.char_index,
+                e.segment_index,
+                e.fields,
+                text[: e.char_index],
+                "|",
+                text[e.char_index :],
+            )
         else:
             print("passed:", text, f)
 
     # Fails - the fields are {"name": "abcdef"} because the token can capture
     # the entire string, so the first regex capture stores the wrong field value
-    t = Template(
-        "name",
-        [
-            token.StringToken("name"),
-            "def",
-        ],
-    )
-    for text in (
-        "abc",
-        "abcdef",
-    ):
+    t = Template("name", [token.StringToken("name"), "def"])
+    for text in ("abc", "abcdef"):
         try:
-            f = t.debug_parse(text)
-        except DebugParseError as e:
-            print(e)
+            f = t.parse_debug(text)
+        except exceptions.DebugParseError as e:
+            print(
+                e,
+                "::",
+                e.char_index,
+                e.segment_index,
+                e.fields,
+                text[: e.char_index],
+                "|",
+                text[e.char_index :],
+            )
         else:
             print("passed:", text, f)
