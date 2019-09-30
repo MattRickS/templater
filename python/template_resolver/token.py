@@ -47,16 +47,21 @@ class Token(object):
 
         return regex
 
-    def __init__(self, name, regex, format_spec):
+    def __init__(self, name, regex, format_spec, description=None):
         """
         Args:
             name (str): Name of the token
             regex (str): Regex pattern the token should capture
             format_spec (str): Python format string to use when formatting
+
+        Keyword Args:
+            description (str): Description for the token. Used to explain how
+                the value should be formatted
         """
         self._name = name
         self._pattern = re.compile("^{}$".format(regex))
         self._format_spec = format_spec
+        self._description = description
 
     def __repr__(self):
         return (
@@ -66,6 +71,14 @@ class Token(object):
 
     def __str__(self):
         return self._name
+
+    @property
+    def description(self):
+        """
+        Returns:
+            str: Description message to display for the token
+        """
+        return self._description
 
     @property
     def name(self):
@@ -165,7 +178,7 @@ class IntToken(Token):
         format_spec = super(IntToken, cls).get_format_spec_from_config(config)
         return format_spec + "d"
 
-    def __init__(self, name, regex=REGEX + "+", format_spec="d"):
+    def __init__(self, name, regex=REGEX + "+", format_spec="d", description=None):
         """
         Args:
             name (str): Name of the token
@@ -174,8 +187,11 @@ class IntToken(Token):
             regex (str): Regex pattern for the string. Defaults to integer
                 characters only
             format_spec (str): Python format string to use when formatting.
+            description (str): Description message
         """
-        super(IntToken, self).__init__(name, regex, format_spec)
+        super(IntToken, self).__init__(
+            name, regex, format_spec, description=description or "Must be an integer"
+        )
 
     def value_from_parsed_string(self, string):
         """
@@ -210,7 +226,7 @@ class StringToken(Token):
         format_spec = super(StringToken, cls).get_format_spec_from_config(config)
         return format_spec + "s"
 
-    def __init__(self, name, regex=REGEX + "+", format_spec="s"):
+    def __init__(self, name, regex=REGEX + "+", format_spec="s", description=None):
         """
         Args:
             name (str): Name of the token
@@ -218,5 +234,9 @@ class StringToken(Token):
         Keyword Args:
             regex (str): Regex pattern for the string. Defaults to alphabetical
                 characters only
+            format_spec (str): Python format string to use when formatting.
+            description (str): Description message
         """
-        super(StringToken, self).__init__(name, regex, format_spec)
+        super(StringToken, self).__init__(
+            name, regex, format_spec, description=description or "Must be a string"
+        )
