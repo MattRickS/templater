@@ -15,12 +15,16 @@ def format_string_debugger(template, string, debug_exc):
     Returns:
         str: Formatted error message that pinpoints the error
     """
-    segment = template.segments()[debug_exc.segment_index]
-    validate_message = [
-        "String '{}' does not match: ".format(segment)
-        if isinstance(segment, six.string_types)
-        else "Token '{}' does not match: {}".format(segment.name, segment.description)
-    ]
+    segments = template.segments()
+    if debug_exc.segment_index >= len(segments):
+        validate_message = [str(debug_exc)]
+    else:
+        segment = segments[debug_exc.segment_index]
+        validate_message = [
+            "String '{}' does not match: ".format(segment)
+            if isinstance(segment, six.string_types)
+            else "Token '{}' does not match: {}".format(segment.name, segment.description)
+        ]
     prefix_string = "Pattern: "
     indent = len(prefix_string)
     validate_message.append("{}{}".format(prefix_string, template.pattern()))
