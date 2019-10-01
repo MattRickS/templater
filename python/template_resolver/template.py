@@ -72,13 +72,15 @@ class Template(object):
                 must match tokens
 
         Keyword Args:
-            wildcards (list[str]): List of field names to skip formatting and
-                use a wildcard symbol for
+            wildcards (dict[str, str]): Dictionary of field names mapping to
+                tokens. Fields in wildcards skip formatting checks and use the
+                given string instead. This is intended to allow custom wildcard
+                formatting for search functions.
 
         Returns:
             str: Formatted template string
         """
-        wildcards = wildcards or []
+        wildcards = wildcards or {}
         segments = []
         for segment in self._segments:
             if isinstance(segment, six.string_types):
@@ -87,7 +89,7 @@ class Template(object):
                 string_segment = segment.format(fields)
             elif isinstance(segment, token.Token):
                 if segment.name in wildcards:
-                    string_segment = constants.SYMBOL_WILDCARD
+                    string_segment = wildcards[segment.name]
                 elif segment.name not in fields:
                     raise exceptions.MissingTokenError(segment.name)
                 else:

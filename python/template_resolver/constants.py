@@ -24,6 +24,6 @@ REGEX_INT = "[0-9]"
 REGEX_STR = "[a-zA-Z]"
 
 SYMBOL_TEMPLATE = "@"
-SYMBOL_WILDCARD = "*"
+SYMBOL_PATH_WILDCARD = "*"
 
 TOKEN_PATTERN = r"{(\W)?(\w+)}"

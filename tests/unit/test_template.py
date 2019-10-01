@@ -133,7 +133,7 @@ class TestTemplate(object):
             (
                 [token.IntToken("int"), "_", token.StringToken("str")],
                 {"str": "word"},
-                ["int"],
+                {"int": "*"},
                 "*_word",
             ),
         ],

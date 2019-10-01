@@ -1,7 +1,7 @@
 import glob
 import os
 
-from template_resolver import exceptions, template
+from template_resolver import constants, exceptions, template
 
 
 class PathTemplate(template.Template):
@@ -29,8 +29,8 @@ class PathTemplate(template.Template):
                 must match tokens
 
         Keyword Args:
-            wildcards (list[str]): List of field names to skip formatting and
-                use a wildcard symbol for
+            wildcards (dict[str, str]): List of field names to skip formatting
+                and use a wildcard symbol for
 
         Returns:
             str: OS path
@@ -65,7 +65,12 @@ class PathTemplate(template.Template):
             Iterable[tuple[dict, str]]: Iterable of matching paths and their
                 fields
         """
-        path_string = self.format(fields, wildcards=wildcards)
+        path_string = self.format(
+            fields,
+            wildcards={
+                field: constants.SYMBOL_PATH_WILDCARD for field in wildcards or ()
+            },
+        )
         for path in glob.iglob(path_string):
             agnostic_path = path.replace("\\", "/")
             try:
