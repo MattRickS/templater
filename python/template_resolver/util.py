@@ -21,7 +21,7 @@ def format_string_debugger(template, string, debug_exc):
     else:
         segment = segments[debug_exc.segment_index]
         validate_message = [
-            "String '{}' does not match: ".format(segment)
+            "String '{}' does not match".format(segment)
             if isinstance(segment, six.string_types)
             else "Token '{}' does not match: {}".format(segment.name, segment.description)
         ]

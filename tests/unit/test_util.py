@@ -48,6 +48,20 @@ def test_get_regex_padding__invalid_range():
             "         seqSequence_shot12345\n"
             "                            ^",
         ),
+        (
+            "SeqSequence_shot123",
+            "String 'seq' does not match\n"
+            "Pattern: seq{sequence}_shot{shot}\n"
+            "         SeqSequence_shot123\n"
+            "         ^",
+        ),
+        (
+            "seqSequence_sot123",
+            "String '_shot' does not match\n"
+            "Pattern: seq{sequence}_shot{shot}\n"
+            "         seqSequence_sot123\n"
+            "                      ^",
+        ),
     ],
 )
 def test_format_string_debugger(string, expected_format):
