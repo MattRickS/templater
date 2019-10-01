@@ -308,27 +308,6 @@ class Template(object):
             if isinstance(segment, token.Token)
         ]
 
-    # TODO: Move this to a utility method: format_string_debugger(template, string, debug_exc)
-    def validate_string(self, string):
-        try:
-            self.parse_debug(string)
-        except exceptions.DebugParseError as e:
-            segment = self.segments()[e.segment_index]
-            validate_message = [
-                "Token '{}' does not match: {}".format(
-                    segment.name, segment.description
-                )
-                if isinstance(segment, token.Token)
-                else "String '{}' does not match: ".format(segment)
-            ]
-            indent = 9
-            validate_message.append("Pattern: {}".format(self.pattern()))
-            validate_message.append(" " * indent + string)
-            validate_message.append(" " * (indent + e.char_index) + "^")
-            return "\n".join(validate_message)
-        else:
-            return ""
-
     def _parse(self, regex, string):
         match = re.match(regex, string)
         if not match:
@@ -345,29 +324,3 @@ class Template(object):
             for token_obj in self.tokens()
         }
         return fields, match.end()
-
-
-if __name__ == "__main__":
-    t = Template(
-        "name",
-        [
-            "ld",
-            token.StringToken(
-                "sequence_name",
-                regex="[A-Z][a-zA-Z]+",
-                description="Must be UpperCamel case",
-            ),
-            "_s",
-            token.StringToken(
-                "shot_name",
-                regex="[A-Z][a-zA-Z]+",
-                description="Must be UpperCamel case",
-            ),
-        ],
-    )
-    print(t.pattern())
-    print(t.validate_string("ldSequence_sShot"))
-    print(t.validate_string("ldSequence_Shot"))
-    print(t.validate_string("ldsequence_sShot"))
-    print(t.validate_string("ldSequence_sshot"))
-    print(t.validate_string("ldSequence_s0000"))

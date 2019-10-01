@@ -1,4 +1,32 @@
+import six
+
 from template_resolver import exceptions
+
+
+def format_string_debugger(template, string, debug_exc):
+    """
+    Args:
+        template (template_resolver.template.Template): Template that raised the
+            error
+        string (str): String that failed to parse
+        debug_exc (exceptions.DebugParseError): Exception raised during
+            debugging
+
+    Returns:
+        str: Formatted error message that pinpoints the error
+    """
+    segment = template.segments()[debug_exc.segment_index]
+    validate_message = [
+        "String '{}' does not match: ".format(segment)
+        if isinstance(segment, six.string_types)
+        else "Token '{}' does not match: {}".format(segment.name, segment.description)
+    ]
+    prefix_string = "Pattern: "
+    indent = len(prefix_string)
+    validate_message.append("{}{}".format(prefix_string, template.pattern()))
+    validate_message.append(" " * indent + string)
+    validate_message.append(" " * (indent + debug_exc.char_index) + "^")
+    return "\n".join(validate_message)
 
 
 def get_regex_padding(padmin=None, padmax=None):
