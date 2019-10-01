@@ -338,6 +338,33 @@ class TestTemplate(object):
         assert exc_info.value.fields == expected_fields
 
     @pytest.mark.parametrize(
+        "string, expected_cls, expected_char_index, expected_segment_index, expected_fields",
+        [
+            ("abc_center_123", exceptions.DebugParseError, 11, 2, {"prefix": "abc"}),
+            # Partial fixed string match
+            ("abc_centre_def", exceptions.DebugParseError, 8, 1, {"prefix": "abc"}),
+        ],
+    )
+    def test_parse_debug_error_3(
+        self,
+        string,
+        expected_cls,
+        expected_char_index,
+        expected_segment_index,
+        expected_fields,
+    ):
+        t = template.Template(
+            "name",
+            [token.StringToken("prefix"), "_center_", token.StringToken("suffix")],
+        )
+        with pytest.raises(expected_cls) as exc_info:
+            t.parse_debug(string)
+
+        assert exc_info.value.char_index == expected_char_index
+        assert exc_info.value.segment_index == expected_segment_index
+        assert exc_info.value.fields == expected_fields
+
+    @pytest.mark.parametrize(
         "segments, formatters, expected",
         [
             (
