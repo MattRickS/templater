@@ -19,7 +19,7 @@ class PathTemplate(template.Template):
         relative_path = agnostic_path[end:].lstrip("/")
         return fields, os.path.normpath(relative_path)
 
-    def format(self, fields, wildcards=None):
+    def format(self, fields, unformatted=None):
         """
         Raises:
             exceptions.FormatError: If the fields don't match the template
@@ -29,13 +29,13 @@ class PathTemplate(template.Template):
                 must match tokens
 
         Keyword Args:
-            wildcards (dict[str, str]): List of field names to skip formatting
+            unformatted (dict[str, str]): List of field names to skip formatting
                 and use a wildcard symbol for
 
         Returns:
             str: OS path
         """
-        path = super(PathTemplate, self).format(fields, wildcards=wildcards)
+        path = super(PathTemplate, self).format(fields, unformatted=unformatted)
         return os.path.normpath(path)
 
     def parse(self, string):
@@ -67,7 +67,7 @@ class PathTemplate(template.Template):
         """
         path_string = self.format(
             fields,
-            wildcards={
+            unformatted={
                 field: constants.SYMBOL_PATH_WILDCARD for field in wildcards or ()
             },
         )

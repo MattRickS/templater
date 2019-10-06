@@ -140,7 +140,7 @@ class TestTemplate(object):
     )
     def test_format(self, segments, fields, wildcards, expected):
         t = template.Template("name", segments)
-        assert t.format(fields, wildcards=wildcards) == expected
+        assert t.format(fields, unformatted=wildcards) == expected
 
     def test_format_error(self):
         t = template.Template("name", [token.StringToken("str"), "_", 1])
