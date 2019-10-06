@@ -97,7 +97,7 @@ class TestIntToken(object):
 
 
 class TestStringToken(object):
-    @pytest.mark.parametrize("config, expected", [({}, "s"), ({"padmin": 3}, "X>3s")])
+    @pytest.mark.parametrize("config, expected", [({}, "s"), ({"padmin": 3}, "s")])
     def test_get_format_spec_from_config(self, config, expected):
         assert token.StringToken.get_format_spec_from_config(config) == expected
 

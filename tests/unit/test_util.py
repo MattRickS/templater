@@ -1,6 +1,25 @@
 import pytest
 
-from template_resolver import exceptions, template, token, util
+from template_resolver import constants, exceptions, template, token, util
+
+
+@pytest.mark.parametrize(
+    "case, expected",
+    [
+        (constants.Case.Lower, "[a-z]"),
+        (constants.Case.LowerCamel, "[a-z][a-zA-Z]"),
+        (constants.Case.Upper, "[A-Z]"),
+        (constants.Case.UpperCamel, "[A-Z][a-zA-Z]"),
+    ],
+)
+def test_get_case_regex(case, expected):
+    assert util.get_case_regex(case) == expected
+
+
+def test_get_case_regex__invalid():
+    with pytest.raises(exceptions.ResolverError) as exc_info:
+        util.get_case_regex("invalid")
+    assert str(exc_info.value) == "Unknown case: invalid"
 
 
 @pytest.mark.parametrize(
@@ -15,6 +34,14 @@ def test_get_regex_padding__invalid_range():
     with pytest.raises(exceptions.ResolverError) as exc_info:
         util.get_regex_padding(padmin=3, padmax=1)
     assert str(exc_info.value) == "Padmax (1) cannot be lower than padmin (3)"
+
+    with pytest.raises(exceptions.ResolverError) as exc_info:
+        util.get_regex_padding(padmin=-1)
+    assert str(exc_info.value) == "Padmin cannot be less than 0: -1"
+
+    with pytest.raises(exceptions.ResolverError) as exc_info:
+        util.get_regex_padding(padmax=-2)
+    assert str(exc_info.value) == "Padmax cannot be less than 0: -2"
 
 
 @pytest.mark.parametrize(
@@ -80,7 +107,6 @@ def test_format_string_debugger(string, expected_format):
             ),
         ],
     )
-    try:
+    with pytest.raises(exceptions.DebugParseError) as exc_info:
         t.parse_debug(string)
-    except exceptions.DebugParseError as exc_info:
-        assert util.format_string_debugger(t, string, exc_info) == expected_format
+    assert util.format_string_debugger(t, string, exc_info.value) == expected_format

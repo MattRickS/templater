@@ -1,3 +1,10 @@
+class Case(object):
+    Lower = "lower"
+    LowerCamel = "lowerCamel"
+    Upper = "upper"
+    UpperCamel = "UpperCamel"
+
+
 class TokenType(object):
     String = "str"
     Int = "int"

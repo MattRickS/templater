@@ -36,7 +36,8 @@ class Token(object):
         format_spec = config.get("format_spec")
         if format_spec is None:
             padmin = config.get("padmin")
-            if padmin is None:
+            padstrict = config.get("padstrict")
+            if padmin is None or padstrict:
                 format_spec = ""
             else:
                 padalign = config.get("padalign", cls.PADALIGN)
@@ -274,14 +275,17 @@ class StringToken(Token):
         if description is None:
             padmin = config.get("padmin")
             padmax = config.get("padmax")
+            case = config.get("case")
+            case = "{} case ".format(case) if case else ""
+
             if padmin is not None and padmin == padmax:
-                description = "Must be a {}-character string".format(padmin)
+                description = "Must be a {}-character {}string".format(padmin, case)
             elif padmin is not None:
-                description = "Must be a minimum {}-character string".format(padmin)
+                description = "Must be a minimum {}-character {}string".format(padmin, case)
             elif padmax is not None:
-                description = "Must be a maximum {}-character string".format(padmax)
+                description = "Must be a maximum {}-character {}string".format(padmax, case)
             else:
-                description = "Must be a string"
+                description = "Must be a {}string".format(case)
         return description
 
     @classmethod
@@ -293,8 +297,38 @@ class StringToken(Token):
         Returns:
             str: Format spec for the token with the string "s" appended
         """
+        # Enable strict padding by default unless set
+        config.setdefault("padstrict", True)
         format_spec = super(StringToken, cls).get_format_spec_from_config(config)
         return format_spec + "s"
+
+    @classmethod
+    def get_regex_from_config(cls, config):
+        """
+        Args:
+            config (dict): Dictionary of token configuration values
+
+        Returns:
+            str: Regex pattern for the token
+        """
+        case = config.get("case")
+        regex = config.get("regex")
+        if regex is None and case:
+            regex = util.get_case_regex(case)
+            padmin = config.get("padmin")
+            padmax = config.get("padmax")
+            # Camel cases add a fixed starting character, modify padding accordingly
+            if case in (constants.Case.LowerCamel, constants.Case.UpperCamel):
+                padmin = (padmin - 1) if padmin else None
+                padmax = (padmax - 1) if padmax else None
+            regex += util.get_regex_padding(padmin=padmin, padmax=padmax)
+        elif case is not None:
+            raise exceptions.ResolverError(
+                "Cannot use construction keywords with explicit regex"
+            )
+        else:
+            regex = super(StringToken, cls).get_regex_from_config(config)
+        return regex
 
     def __init__(self, name, regex=REGEX + "+", format_spec="s", description=None):
         """

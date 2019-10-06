@@ -1,6 +1,6 @@
 import six
 
-from template_resolver import exceptions
+from template_resolver import constants, exceptions
 
 
 def format_string_debugger(template, string, debug_exc):
@@ -33,6 +33,28 @@ def format_string_debugger(template, string, debug_exc):
     return "\n".join(validate_message)
 
 
+def get_case_regex(case):
+    """
+    Args:
+        case (str): Name of the case to construct a regex for
+
+    Returns:
+        str: Regex pattern for parsing the case - does not include padding
+    """
+    if case == constants.Case.Lower:
+        regex = "[a-z]"
+    elif case == constants.Case.LowerCamel:
+        regex = "[a-z][a-zA-Z]"
+    elif case == constants.Case.Upper:
+        regex = "[A-Z]"
+    elif case == constants.Case.UpperCamel:
+        regex = "[A-Z][a-zA-Z]"
+    else:
+        raise exceptions.ResolverError("Unknown case: {}".format(case))
+
+    return regex
+
+
 def get_regex_padding(padmin=None, padmax=None):
     """
     Gets a regex pattern for enforcing padding size on other patterns. Defaults
@@ -45,6 +67,11 @@ def get_regex_padding(padmin=None, padmax=None):
     Returns:
         str: Regex padding symbol(s) to append to a regex pattern
     """
+    if padmin is not None and padmin < 0:
+        raise exceptions.ResolverError("Padmin cannot be less than 0: {}".format(padmin))
+    if padmax is not None and padmax < 0:
+        raise exceptions.ResolverError("Padmax cannot be less than 0: {}".format(padmax))
+
     if padmin is not None and padmax is not None:
         if padmax < padmin:
             raise exceptions.ResolverError(
