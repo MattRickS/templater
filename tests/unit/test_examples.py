@@ -93,12 +93,14 @@ def test_resolver():
                 "int": "int",
                 "int_pad": {"type": "int", "padmin": 3},
                 "lowerCase": {"type": "str", "regex": "[a-z][a-zA-Z]+"},
+                "options": {"type": "str", "choices": ["abc", "def"]}
             },
             "templates": {
                 "root": "{str}_{int}",
                 "parent": "{@root}_{str}",
                 "example": "{lowerCase}_{int}",
                 "name": "{@root}_{int_pad}",
+                "opt_template": "prefix_{options}",
             },
         }
     )
@@ -124,3 +126,5 @@ def test_resolver():
         t_resolver.get_template("example").format({"int": 50, "lowerCase": "abcDef"})
         == "abcDef_50"
     )
+    assert t_resolver.get_template("opt_template").parse("prefix_abc") == {"options": "abc"}
+    assert t_resolver.get_template("opt_template").format({"options": "def"}) == "prefix_def"

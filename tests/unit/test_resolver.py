@@ -184,6 +184,11 @@ def test_create_template__invalid_symbol():
             {"type": "str", "padmax": 3},
             token.StringToken("str", regex="[a-zA-Z]{,3}", format_spec="s"),
         ),
+        (
+            "str",
+            {"type": "str", "choices": ["abc", "def", "ghi"]},
+            token.StringToken("str", regex="abc|def|ghi", format_spec="s"),
+        ),
     ],
 )
 def test_create_token(name, config, expected):
@@ -211,6 +216,10 @@ def test_create_token__invalid_config():
     with pytest.raises(exceptions.ResolverError) as exc_info:
         resolver_obj.create_token("int", {"type": "int", "padmin": 3, "padmax": 2})
     assert str(exc_info.value) == "Padmax (2) cannot be lower than padmin (3)"
+
+    with pytest.raises(exceptions.ResolverError) as exc_info:
+        resolver_obj.create_token("str", {"type": "str", "regex": "[a-z]", "choices": ["a", "b"]})
+    assert str(exc_info.value) == "Cannot use construction keywords with explicit regex"
 
 
 def test_get_template():

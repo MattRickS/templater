@@ -39,11 +39,19 @@ class Token(object):
             str: Regex pattern for the token
         """
         regex = config.get("regex")
+        choices = config.get("choices")
+        padmin = config.get("padmin")
+        padmax = config.get("padmax")
         if regex is None:
-            padmin = config.get("padmin")
-            padmax = config.get("padmax")
-            regex = cls.REGEX
-            regex += util.get_regex_padding(padmin=padmin, padmax=padmax)
+            if choices:
+                regex = "|".join(map(str, choices))
+            else:
+                regex = cls.REGEX
+                regex += util.get_regex_padding(padmin=padmin, padmax=padmax)
+        elif choices or padmin or padmax:
+            raise exceptions.ResolverError(
+                "Cannot use construction keywords with explicit regex"
+            )
 
         return regex
 
