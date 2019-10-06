@@ -61,12 +61,12 @@ class Token(object):
         self._name = name
         self._pattern = re.compile("^{}$".format(regex))
         self._format_spec = format_spec
-        self._description = description
+        self._description = description or ''
 
     def __repr__(self):
         return (
-            "{s.__class__.__name__}({s.name!r}, {regex!r}, "
-            "{s.format_spec!r})".format(s=self, regex=self.regex())
+            "{s.__class__.__name__}({s.name!r}, {regex!r}, {s.format_spec!r}, "
+            "description={s.description!r})".format(s=self, regex=self.regex())
         )
 
     def __str__(self):

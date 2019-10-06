@@ -166,8 +166,8 @@ def test_create_template__invalid_symbol():
     [
         (
             "int",
-            {"type": "int"},
-            token.IntToken("int", regex="[0-9]+", format_spec="d"),
+            {"type": "int", "description": "example"},
+            token.IntToken("int", regex="[0-9]+", format_spec="d", description="example"),
         ),
         (
             "int_padded",
