@@ -143,21 +143,27 @@ def test_create_template__template_exists():
 def test_create_template__missing_token():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", {"string": "/root/{str}", "type": "template"})
+        resolver_obj.create_template(
+            "name", {"string": "/root/{str}", "type": "template"}
+        )
     assert str(exc_info.value) == "Requested token name does not exist: str"
 
 
 def test_create_template__missing_template():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", {"string": "/root/{@template}", "type": "template"})
+        resolver_obj.create_template(
+            "name", {"string": "/root/{@template}", "type": "template"}
+        )
     assert str(exc_info.value) == "Requested template name does not exist: template"
 
 
 def test_create_template__invalid_symbol():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template("name", {"string": "/root/{!str}", "type": "template"})
+        resolver_obj.create_template(
+            "name", {"string": "/root/{!str}", "type": "template"}
+        )
     assert str(exc_info.value) == "Unknown token symbol: !"
 
 
@@ -167,27 +173,49 @@ def test_create_template__invalid_symbol():
         (
             "int",
             {"type": "int", "description": "example"},
-            token.IntToken("int", regex="[0-9]+", format_spec="d", description="example"),
+            token.IntToken(
+                "int", regex="[0-9]+", format_spec="d", description="example"
+            ),
         ),
         (
             "int_padded",
             {"type": "int", "padmin": 3},
-            token.IntToken("int_padded", regex="[0-9]{3,}", format_spec="0=3d"),
+            token.IntToken(
+                "int_padded",
+                regex="[0-9]{3,}",
+                format_spec="0=3d",
+                description="Must be a minimum 3-digit integer",
+            ),
         ),
         (
             "str",
             {"type": "str"},
-            token.StringToken("str", regex="[a-zA-Z]+", format_spec="s"),
+            token.StringToken(
+                "str",
+                regex="[a-zA-Z]+",
+                format_spec="s",
+                description="Must be a string",
+            ),
         ),
         (
             "str",
             {"type": "str", "padmax": 3},
-            token.StringToken("str", regex="[a-zA-Z]{,3}", format_spec="s"),
+            token.StringToken(
+                "str",
+                regex="[a-zA-Z]{,3}",
+                format_spec="s",
+                description="Must be a maximum 3-character string",
+            ),
         ),
         (
             "str",
             {"type": "str", "choices": ["abc", "def", "ghi"]},
-            token.StringToken("str", regex="abc|def|ghi", format_spec="s"),
+            token.StringToken(
+                "str",
+                regex="abc|def|ghi",
+                format_spec="s",
+                description="Must be one of: ['abc', 'def', 'ghi']",
+            ),
         ),
     ],
 )
@@ -218,7 +246,9 @@ def test_create_token__invalid_config():
     assert str(exc_info.value) == "Padmax (2) cannot be lower than padmin (3)"
 
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_token("str", {"type": "str", "regex": "[a-z]", "choices": ["a", "b"]})
+        resolver_obj.create_token(
+            "str", {"type": "str", "regex": "[a-z]", "choices": ["a", "b"]}
+        )
     assert str(exc_info.value) == "Cannot use construction keywords with explicit regex"
 
 

@@ -9,6 +9,22 @@ class Token(object):
     REGEX = "."
 
     @classmethod
+    def get_description_from_config(cls, config):
+        """
+        Args:
+            config (dict): Dictionary of token configuration values
+
+        Returns:
+            str: Description message for the token
+        """
+        description = config.get("description")
+        if not description:
+            choices = config.get("choices")
+            if choices:
+                description = "Must be one of: {}".format(choices)
+        return description
+
+    @classmethod
     def get_format_spec_from_config(cls, config):
         """
         Args:
@@ -69,7 +85,7 @@ class Token(object):
         self._name = name
         self._pattern = re.compile("^{}$".format(regex))
         self._format_spec = format_spec
-        self._description = description or ''
+        self._description = description or ""
 
     def __repr__(self):
         return (
@@ -175,6 +191,29 @@ class IntToken(Token):
     REGEX = constants.REGEX_INT
 
     @classmethod
+    def get_description_from_config(cls, config):
+        """
+        Args:
+            config (dict): Dictionary of token configuration values
+
+        Returns:
+            str: Description message for the token
+        """
+        description = super(IntToken, cls).get_description_from_config(config)
+        if description is None:
+            padmin = config.get("padmin")
+            padmax = config.get("padmax")
+            if padmin is not None and padmin == padmax:
+                description = "Must be a {}-digit integer".format(padmin)
+            elif padmin is not None:
+                description = "Must be a minimum {}-digit integer".format(padmin)
+            elif padmax is not None:
+                description = "Must be a maximum {}-digit integer".format(padmax)
+            else:
+                description = "Must be an integer"
+        return description
+
+    @classmethod
     def get_format_spec_from_config(cls, config):
         """
         Args:
@@ -198,7 +237,7 @@ class IntToken(Token):
             description (str): Description message
         """
         super(IntToken, self).__init__(
-            name, regex, format_spec, description=description or "Must be an integer"
+            name, regex, format_spec, description=description
         )
 
     def value_from_parsed_string(self, string):
@@ -221,6 +260,29 @@ class StringToken(Token):
     PADALIGN = constants.DEFAULT_PADALIGN_STR
     PADCHAR = constants.DEFAULT_PADCHAR_STR
     REGEX = constants.REGEX_STR
+
+    @classmethod
+    def get_description_from_config(cls, config):
+        """
+        Args:
+            config (dict): Dictionary of token configuration values
+
+        Returns:
+            str: Description message for the token
+        """
+        description = super(StringToken, cls).get_description_from_config(config)
+        if description is None:
+            padmin = config.get("padmin")
+            padmax = config.get("padmax")
+            if padmin is not None and padmin == padmax:
+                description = "Must be a {}-character string".format(padmin)
+            elif padmin is not None:
+                description = "Must be a minimum {}-character string".format(padmin)
+            elif padmax is not None:
+                description = "Must be a maximum {}-character string".format(padmax)
+            else:
+                description = "Must be a string"
+        return description
 
     @classmethod
     def get_format_spec_from_config(cls, config):
@@ -246,5 +308,5 @@ class StringToken(Token):
             description (str): Description message
         """
         super(StringToken, self).__init__(
-            name, regex, format_spec, description=description or "Must be a string"
+            name, regex, format_spec, description=description
         )
