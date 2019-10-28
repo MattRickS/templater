@@ -136,6 +136,13 @@ class TestTemplate(object):
                 {"int": "*"},
                 "*_word",
             ),
+            # Defaults
+            (
+                [token.IntToken("int", default=1), "_", token.StringToken("str", default="abc")],
+                {},
+                None,
+                "1_abc",
+            ),
         ],
     )
     def test_format(self, segments, fields, wildcards, expected):
@@ -151,11 +158,11 @@ class TestTemplate(object):
 
     def test_format_missing_token_error(self):
         t = template.Template(
-            "name", [token.StringToken("str"), "_", token.IntToken("int")]
+            "name", [token.StringToken("str"), "_", token.IntToken("int", default=1)]
         )
 
         with pytest.raises(exceptions.MissingTokenError) as exc_info:
-            t.format({"str": "abc"})
+            t.format({"str": "abc"}, use_defaults=False)
         assert exc_info.value.token_name == "int"
 
         with pytest.raises(exceptions.MissingTokenError) as exc_info:

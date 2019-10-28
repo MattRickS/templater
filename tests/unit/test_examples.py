@@ -104,8 +104,8 @@ def test_resolver():
             },
         }
     )
-    assert repr(t_resolver.get_token("str")) == "StringToken('str', '[a-zA-Z]+', 's', description='Must be a string')"
-    assert repr(t_resolver.get_token("int")) == "IntToken('int', '[0-9]+', 'd', description='Must be an integer')"
+    assert repr(t_resolver.get_token("str")) == "StringToken('str', '[a-zA-Z]+', 's', description='Must be a string', default=None)"
+    assert repr(t_resolver.get_token("int")) == "IntToken('int', '[0-9]+', 'd', description='Must be an integer', default=None)"
 
     lower_case_token = t_resolver.get_token("lowerCase")
     assert lower_case_token.format("abcDef") == "abcDef"

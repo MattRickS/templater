@@ -62,7 +62,7 @@ class Template(object):
             if isinstance(segment, six.string_types)
         ]
 
-    def format(self, fields, unformatted=None):
+    def format(self, fields, unformatted=None, use_defaults=True):
         """
         Raises:
             exceptions.FormatError: If the fields don't match the template
@@ -76,6 +76,8 @@ class Template(object):
                 values. Fields in unformatted skip formatting checks and use the
                 given string instead. This is intended to allow custom wildcard
                 formatting for search functions.
+            use_defaults (bool): Whether or not to use token's default values
+                for missing fields.
 
         Returns:
             str: Formatted template string
@@ -91,7 +93,10 @@ class Template(object):
                 if segment.name in unformatted:
                     string_segment = unformatted[segment.name]
                 elif segment.name not in fields:
-                    raise exceptions.MissingTokenError(segment.name)
+                    if use_defaults and segment.default is not None:
+                        string_segment = str(segment.default)
+                    else:
+                        raise exceptions.MissingTokenError(segment.name)
                 else:
                     string_segment = segment.format(fields[segment.name])
             else:

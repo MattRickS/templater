@@ -72,7 +72,7 @@ class Token(object):
 
         return regex
 
-    def __init__(self, name, regex, format_spec, description=None):
+    def __init__(self, name, regex, format_spec, description=None, default=None):
         """
         Args:
             name (str): Name of the token
@@ -82,20 +82,32 @@ class Token(object):
         Keyword Args:
             description (str): Description for the token. Used to explain how
                 the value should be formatted
+            default: Default value to use for the token if no value is provided
         """
         self._name = name
         self._pattern = re.compile("^{}$".format(regex))
         self._format_spec = format_spec
         self._description = description or ""
+        self._default = default
 
     def __repr__(self):
         return (
             "{s.__class__.__name__}({s.name!r}, {regex!r}, {s.format_spec!r}, "
-            "description={s.description!r})".format(s=self, regex=self.regex())
+            "description={s.description!r}, default={s.default})".format(
+                s=self, regex=self.regex()
+            )
         )
 
     def __str__(self):
         return self._name
+
+    @property
+    def default(self):
+        """
+        Returns:
+            str: Default value for the token
+        """
+        return self._default
 
     @property
     def description(self):
@@ -226,7 +238,9 @@ class IntToken(Token):
         format_spec = super(IntToken, cls).get_format_spec_from_config(config)
         return format_spec + "d"
 
-    def __init__(self, name, regex=REGEX + "+", format_spec="d", description=None):
+    def __init__(
+        self, name, regex=REGEX + "+", format_spec="d", description=None, default=None
+    ):
         """
         Args:
             name (str): Name of the token
@@ -236,9 +250,10 @@ class IntToken(Token):
                 characters only
             format_spec (str): Python format string to use when formatting.
             description (str): Description message
+            default: Default value to use for the token if no value is provided
         """
         super(IntToken, self).__init__(
-            name, regex, format_spec, description=description
+            name, regex, format_spec, description=description, default=default
         )
 
     def value_from_parsed_string(self, string):
@@ -281,9 +296,13 @@ class StringToken(Token):
             if padmin is not None and padmin == padmax:
                 description = "Must be a {}-character {}string".format(padmin, case)
             elif padmin is not None:
-                description = "Must be a minimum {}-character {}string".format(padmin, case)
+                description = "Must be a minimum {}-character {}string".format(
+                    padmin, case
+                )
             elif padmax is not None:
-                description = "Must be a maximum {}-character {}string".format(padmax, case)
+                description = "Must be a maximum {}-character {}string".format(
+                    padmax, case
+                )
             else:
                 description = "Must be a {}string".format(case)
         return description
@@ -330,7 +349,9 @@ class StringToken(Token):
             regex = super(StringToken, cls).get_regex_from_config(config)
         return regex
 
-    def __init__(self, name, regex=REGEX + "+", format_spec="s", description=None):
+    def __init__(
+        self, name, regex=REGEX + "+", format_spec="s", description=None, default=None
+    ):
         """
         Args:
             name (str): Name of the token
@@ -340,7 +361,8 @@ class StringToken(Token):
                 characters only
             format_spec (str): Python format string to use when formatting.
             description (str): Description message
+            default: Default value to use for the token if no value is provided
         """
         super(StringToken, self).__init__(
-            name, regex, format_spec, description=description
+            name, regex, format_spec, description=description, default=default
         )

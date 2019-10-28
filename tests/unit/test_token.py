@@ -19,7 +19,7 @@ class TestToken(object):
 
     def test_repr(self):
         t = token.Token("name", "[a-zA-Z]+", "")
-        assert repr(t) == "Token('name', '[a-zA-Z]+', '', description='')"
+        assert repr(t) == "Token('name', '[a-zA-Z]+', '', description='', default=None)"
 
     def test_str(self):
         t = token.Token("name", "[a-zA-Z]+", "")
