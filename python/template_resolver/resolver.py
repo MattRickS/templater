@@ -179,8 +179,13 @@ class TemplateResolver(object):
         regex = token_cls.get_regex_from_config(token_config)
         format_spec = token_cls.get_format_spec_from_config(token_config)
         description = token_cls.get_description_from_config(token_config)
+        default = token_config.get("default")
         token_obj = token_cls(
-            token_name, regex=regex, format_spec=format_spec, description=description
+            token_name,
+            regex=regex,
+            format_spec=format_spec,
+            description=description,
+            default=default,
         )
 
         self._tokens[token_name] = token_obj
