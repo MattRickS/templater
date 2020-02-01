@@ -130,7 +130,7 @@ class TemplateResolver(object):
             symbol, name = match.groups()
             if symbol == constants.SYMBOL_TEMPLATE:
                 try:
-                    template_obj = self.get_template(name)
+                    template_obj = self.template(name)
                 except exceptions.ResolverError:
                     if reference_config is None or name not in reference_config:
                         raise
@@ -139,7 +139,7 @@ class TemplateResolver(object):
                     )
                 segments.append(template_obj)
             elif not symbol:
-                token_obj = self.get_token(name)
+                token_obj = self.token(name)
                 segments.append(token_obj)
             else:
                 raise exceptions.ResolverError(
@@ -191,7 +191,7 @@ class TemplateResolver(object):
         self._tokens[token_name] = token_obj
         return token_obj
 
-    def get_template(self, name):
+    def template(self, name):
         """
         Raises:
             exceptions.ResolverError: If no template exists matching the name
@@ -209,7 +209,7 @@ class TemplateResolver(object):
             )
         return template_obj
 
-    def get_token(self, name):
+    def token(self, name):
         """
         Raises:
             exceptions.ResolverError: If no token exists matching the name
