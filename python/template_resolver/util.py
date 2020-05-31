@@ -23,7 +23,9 @@ def format_string_debugger(template, string, debug_exc):
         validate_message = [
             "String '{}' does not match".format(segment)
             if isinstance(segment, six.string_types)
-            else "Token '{}' does not match: {}".format(segment.name, segment.description)
+            else "Token '{}' does not match: {}".format(
+                segment.name, segment.description
+            )
         ]
     prefix_string = "Pattern: "
     indent = len(prefix_string)
@@ -68,9 +70,13 @@ def get_regex_padding(padmin=None, padmax=None):
         str: Regex padding symbol(s) to append to a regex pattern
     """
     if padmin is not None and padmin < 0:
-        raise exceptions.ResolverError("Padmin cannot be less than 0: {}".format(padmin))
+        raise exceptions.ResolverError(
+            "Padmin cannot be less than 0: {}".format(padmin)
+        )
     if padmax is not None and padmax < 0:
-        raise exceptions.ResolverError("Padmax cannot be less than 0: {}".format(padmax))
+        raise exceptions.ResolverError(
+            "Padmax cannot be less than 0: {}".format(padmax)
+        )
 
     if padmin is not None and padmax is not None:
         if padmax < padmin:

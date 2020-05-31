@@ -93,7 +93,7 @@ def test_resolver():
                 "int": "int",
                 "int_pad": {"type": "int", "padmin": 3},
                 "lowerCase": {"type": "str", "regex": "[a-z][a-zA-Z]+"},
-                "options": {"type": "str", "choices": ["abc", "def"]}
+                "options": {"type": "str", "choices": ["abc", "def"]},
             },
             "templates": {
                 "root": "{str}_{int}",
@@ -104,8 +104,14 @@ def test_resolver():
             },
         }
     )
-    assert repr(t_resolver.get_token("str")) == "StringToken('str', '[a-zA-Z]+', 's', description='Must be a string', default=None)"
-    assert repr(t_resolver.get_token("int")) == "IntToken('int', '[0-9]+', 'd', description='Must be an integer', default=None)"
+    assert (
+        repr(t_resolver.get_token("str"))
+        == "StringToken('str', '[a-zA-Z]+', 's', description='Must be a string', default=None)"
+    )
+    assert (
+        repr(t_resolver.get_token("int"))
+        == "IntToken('int', '[0-9]+', 'd', description='Must be an integer', default=None)"
+    )
 
     lower_case_token = t_resolver.get_token("lowerCase")
     assert lower_case_token.format("abcDef") == "abcDef"
@@ -126,5 +132,10 @@ def test_resolver():
         t_resolver.get_template("example").format({"int": 50, "lowerCase": "abcDef"})
         == "abcDef_50"
     )
-    assert t_resolver.get_template("opt_template").parse("prefix_abc") == {"options": "abc"}
-    assert t_resolver.get_template("opt_template").format({"options": "def"}) == "prefix_def"
+    assert t_resolver.get_template("opt_template").parse("prefix_abc") == {
+        "options": "abc"
+    }
+    assert (
+        t_resolver.get_template("opt_template").format({"options": "def"})
+        == "prefix_def"
+    )

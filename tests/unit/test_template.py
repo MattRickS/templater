@@ -138,7 +138,11 @@ class TestTemplate(object):
             ),
             # Defaults
             (
-                [token.IntToken("int", default=1), "_", token.StringToken("str", default="abc")],
+                [
+                    token.IntToken("int", default=1),
+                    "_",
+                    token.StringToken("str", default="abc"),
+                ],
                 {},
                 None,
                 "1_abc",

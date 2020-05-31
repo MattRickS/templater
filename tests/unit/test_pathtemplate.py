@@ -70,8 +70,13 @@ def test_paths(fs):
             "/filename.ext",
         ],
     )
-    assert list(template_obj.paths({"str": "folderA"}, wildcards=["version"])) == paths[:3]
-    assert list(template_obj.paths({"version": 3}, wildcards=["str"])) == [paths[2], paths[5]]
+    assert (
+        list(template_obj.paths({"str": "folderA"}, wildcards=["version"])) == paths[:3]
+    )
+    assert list(template_obj.paths({"version": 3}, wildcards=["str"])) == [
+        paths[2],
+        paths[5],
+    ]
     assert list(template_obj.paths({}, wildcards=["str", "version"])) == paths
 
 

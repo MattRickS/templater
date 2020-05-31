@@ -192,7 +192,9 @@ class Template(object):
             segment = segments[segment_index]
             char_index = match.end()
             if isinstance(segment, six.string_types):
-                for char_index, (a, b) in enumerate(zip(segment, string[char_index:]), start=char_index):
+                for char_index, (a, b) in enumerate(
+                    zip(segment, string[char_index:]), start=char_index
+                ):
                     if a != b:
                         break
 
