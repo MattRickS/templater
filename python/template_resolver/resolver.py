@@ -1,3 +1,4 @@
+import os
 import re
 
 from template_resolver import constants, exceptions, pathtemplate, template, token
@@ -34,6 +35,10 @@ class TemplateResolver(object):
                         constants.KEY_TYPE: default_template_type,
                         constants.KEY_STRING: template_data,
                     }
+                # Template configuration can define environment variables
+                template_data[constants.KEY_STRING] = os.path.expandvars(
+                    template_data[constants.KEY_STRING]
+                )
                 resolver_obj.create_template(
                     name, template_data, reference_config=template_config
                 )
