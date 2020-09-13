@@ -1,9 +1,9 @@
 # Templater
 
-Templater is a tool for defining patterns that can be used to parse/format strings. There are three main objects; Resolver, Template, Token. These are briefly explained here, and further detail given below the examples.
+Templater is a tool for defining patterns that can be used to parse/format strings. There are three main objects; Token, Template, TemplateResolver. These are briefly explained here, and further detail given below the examples.
 * Tokens represent an unknown value to be parsed/formatted.
 * Templates are a list of "segments", where each segment can be a fixed string, token, or another template.
-* Resolver is a manager class for constructing templates from a set of known tokens, or building templates from a configuration file.
+* TemplateResolver is a manager class for constructing templates from a set of known tokens, or building templates from a configuration file.
 
 ## Examples
 Basic templates can be constructed from the template and token modules
@@ -59,7 +59,7 @@ print(error)
 #                ^
 ```
 
-Templates can be configuration defined and managed by a Resolver
+Templates can be configuration defined and managed by a TemplateResolver
 ```python
 from templater import resolver
 manager = resolver.TemplateResolver.from_config(
