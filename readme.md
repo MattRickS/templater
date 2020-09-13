@@ -1,9 +1,88 @@
-## Tests
+# Templater
 
-Test suite included requires the following packages to run:
-* mock
-* pyfakefs
-* pytest
+Templater is a tool for defining patterns that can be used to parse/format strings. There are three main objects; Resolver, Template, Token. These are briefly explained here, and further detail given below the examples.
+* Tokens represent an unknown value to be parsed/formatted.
+* Templates are a list of "segments", where each segment can be a fixed string, token, or another template.
+* Resolver is a manager class for constructing templates from a set of known tokens, or building templates from a configuration file.
+
+## Examples
+Basic templates can be constructed from the template and token modules
+```python
+from templater import template, token
+```
+
+Templates are just a sequence of "segments", where a segment can be a fixed string, token, or even another template.
+```python
+introduction = template.Template("introduction", ["My name is ", token.StringToken("name")])
+string = introduction.format({"name": "Matt"})
+fields = introduction.parse(string)
+print(string, fields)
+# My name is Matt {'name': 'Matt'}
+```
+
+Tokens have types and formatting so that parsing/formatting works with functional data.
+```python
+filename = template.Template("filename", [token.StringToken("name"), "_v", token.IntToken("version", format_spec="03d")])
+fields = filename.parse("report_v001")
+string = filename.format(fields)
+print(string, fields)
+# report_v001 {'name': 'report', 'version': 1}
+```
+
+Path templates have additional convenience methods for extracting relative paths and globbing the filesystem.
+```python
+from templater import pathtemplate, token
+yearly_report_dir = pathtemplate.PathTemplate("yearly_report_dir", ["/root/", token.StringToken("project"), "/", token.IntToken("year", regex="\d{4}")])
+fields, relative = yearly_report_dir.extract_relative("/root/sales/2020/report.txt")
+print(fields, relative)
+# {'project': 'sales', 'year': 2020} report.txt
+paths = yearly_report_dir.paths({"project": "sales"}, wildcards=["year"])
+print(list(paths))
+# ['/root/sales/2018', '/root/sales/2019', '/root/sales/2020']
+```
+
+Incompatible matches raise a basic error, but more accurate error reporting can be achieved if required. A utility exists for formatting the DebugParseError for display.
+```python
+from templater import template, token, util, exceptions
+mytemplate = template.Template("mytemplate", ["Year: ", token.IntToken("year")])
+string = "Year: Friday"
+# mytemplate.parse(string)  # exceptions.ParseError("String 'Year: Friday' doesn't match template 'mytemplate:Year: {year}'")
+try:
+    mytemplate.parse_debug(string)
+except exceptions.DebugParseError as e:
+    error = util.format_string_debugger(mytemplate, string, e)
+
+print(error)
+# Token 'year' does not match: 
+# Pattern: Year: {year}
+#          Year: Friday
+#                ^
+```
+
+Templates can be configuration defined and managed by a Resolver
+```python
+from templater import resolver
+manager = resolver.TemplateResolver.from_config(
+    {
+        "tokens": {
+            "name": "str",
+            "age": "int",
+            "hobby": "str",
+        },
+        "templates": {
+            "intro": "{name} is {age} years old",
+            "extended_into": "{@intro}. He likes to {hobby}.",
+        },
+    }
+)
+intro = manager.template("intro")
+fields = intro.parse("Tim is 3 years old")
+extended_into = manager.template("extended_into")
+fields["age"] += 2
+fields["hobby"] = "swim"
+extended_into.format(fields)
+# 'Tim is 5 years old. He likes to swim.'
+```
 
 ## Templates
 
@@ -31,7 +110,7 @@ When constructing from a configuration, if the regex and format_spec are not exp
 * padstrict : boolean : If enabled, format_spec is not modified - insufficiently padding values are allowed to fail. Defaults to True for strings, and False for all others.
 * choices : A fixed list of a values the token can have. If provided, format_spec and regex are overridden.
 
-## Subclassing
+## Extending templates
 
 Custom tokens and templates can be defined and added as part of a custom resolver. The example below demonstrates how to add a custom template for templates with deprecated values, ie, a template with a removed token that needs to still parse the full set of values "{prefix}\_{key}\_{value}" -> "{key}\_{value}"
 
@@ -89,3 +168,10 @@ my_template = my_resolver.create_template(
 my_template.parse("one_two")
 # {"key": "one", "value": "two", "prefix": "pre"}
 ```
+
+## Tests
+
+Test suite included requires the following packages to run:
+* mock
+* pyfakefs
+* pytest

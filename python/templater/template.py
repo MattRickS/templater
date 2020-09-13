@@ -321,7 +321,7 @@ class Template(object):
         match = re.match(regex, string)
         if not match:
             raise exceptions.ParseError(
-                "String {} doesn't match template {}".format(string, self)
+                "String '{}' doesn't match template '{}'".format(string, self)
             )
 
         string_fields = match.groupdict()
