@@ -23,15 +23,13 @@ Tokens are defined by three key values:
 An additional field can be provided to tell users what the token should represent. This message is displayed as part of debug messages when failing to parse the token.
 * description : A description of what the token should be, eg, "Must be a 3-digit integer". If not provided, a default is generated for all standard tokens.
 
-If the regex and format_spec are not explicitly provided, common functionality can be constructed using separate keys. Providing any of the following keys with an explicit regex and/or format_spec will raise an error.
+When constructing from a configuration, if the regex and format_spec are not explicitly provided common functionality can be constructed using separate keys. Providing any of the following keys with an explicit regex and/or format_spec will raise an error.
 * padmin : Minimum number of characters in the token. This will set the format_spec to ensure provided values are padded to this length, and modify the regex to add a minimum requirement.
 * padmax : Maximum number of characters the token can accept. This will modify the regex to add a maximum requirement.
 * padchar : The additional character to add when padding out a sub-minimum string, modifies the format_spec. A default value is provided by standard tokens.
 * padalign : The format_spec alignment character to use. A default value is provided by standard tokens.
 * padstrict : boolean : If enabled, format_spec is not modified - insufficiently padding values are allowed to fail. Defaults to True for strings, and False for all others.
 * choices : A fixed list of a values the token can have. If provided, format_spec and regex are overridden.
-
-TODO: Add "choices" and "case"
 
 ## Subclassing
 
