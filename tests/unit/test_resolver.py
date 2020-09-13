@@ -259,19 +259,19 @@ def test_get_template():
     resolver_obj = resolver.TemplateResolver(
         tokens=[int_token], templates=[template_obj]
     )
-    assert resolver_obj.get_template("template") == template_obj
+    assert resolver_obj.template("template") == template_obj
 
     with pytest.raises(exceptions.ResolverError):
-        resolver_obj.get_template("missing")
+        resolver_obj.template("missing")
 
 
 def test_get_token():
     int_token = token.IntToken("int")
     resolver_obj = resolver.TemplateResolver(tokens=[int_token])
-    assert resolver_obj.get_token("int") == int_token
+    assert resolver_obj.token("int") == int_token
 
     with pytest.raises(exceptions.ResolverError):
-        resolver_obj.get_token("missing")
+        resolver_obj.token("missing")
 
 
 def test_has_template():

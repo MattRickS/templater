@@ -1,3 +1,10 @@
+## Tests
+
+Test suite included requires the following packages to run:
+* mock
+* pyfakefs
+* pytest
+
 ## Templates
 
 Templates are defined as a list of segments. Each segment can be a fixed string, a token, or another template. Templates are used to format and parse strings using a dictionary of key, value pairs.

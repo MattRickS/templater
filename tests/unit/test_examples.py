@@ -105,37 +105,33 @@ def test_resolver():
         }
     )
     assert (
-        repr(t_resolver.get_token("str"))
+        repr(t_resolver.token("str"))
         == "StringToken('str', '[a-zA-Z]+', 's', description='Must be a string', default=None)"
     )
     assert (
-        repr(t_resolver.get_token("int"))
+        repr(t_resolver.token("int"))
         == "IntToken('int', '[0-9]+', 'd', description='Must be an integer', default=None)"
     )
 
-    lower_case_token = t_resolver.get_token("lowerCase")
+    lower_case_token = t_resolver.token("lowerCase")
     assert lower_case_token.format("abcDef") == "abcDef"
     with pytest.raises(exceptions.FormatError):
         lower_case_token.format("AbcDef")
 
-    assert t_resolver.get_template("root").pattern() == "{str}_{int}"
-    assert t_resolver.get_template("parent").pattern() == "{str}_{int}_{str}"
+    assert t_resolver.template("root").pattern() == "{str}_{int}"
+    assert t_resolver.template("parent").pattern() == "{str}_{int}_{str}"
     assert (
-        t_resolver.get_template("name").pattern(formatters=True)
+        t_resolver.template("name").pattern(formatters=True)
         == "{str:s}_{int:d}_{int_pad:0=3d}"
     )
     assert (
-        t_resolver.get_template("parent").format({"int": 50, "str": "abc"})
-        == "abc_50_abc"
+        t_resolver.template("parent").format({"int": 50, "str": "abc"}) == "abc_50_abc"
     )
     assert (
-        t_resolver.get_template("example").format({"int": 50, "lowerCase": "abcDef"})
+        t_resolver.template("example").format({"int": 50, "lowerCase": "abcDef"})
         == "abcDef_50"
     )
-    assert t_resolver.get_template("opt_template").parse("prefix_abc") == {
-        "options": "abc"
-    }
+    assert t_resolver.template("opt_template").parse("prefix_abc") == {"options": "abc"}
     assert (
-        t_resolver.get_template("opt_template").format({"options": "def"})
-        == "prefix_def"
+        t_resolver.template("opt_template").format({"options": "def"}) == "prefix_def"
     )
