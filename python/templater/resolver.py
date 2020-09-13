@@ -1,7 +1,7 @@
 import os
 import re
 
-from template_resolver import constants, exceptions, pathtemplate, template, token
+from templater import constants, exceptions, pathtemplate, template, token
 
 
 class TemplateResolver(object):

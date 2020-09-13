@@ -1,7 +1,7 @@
 import re
 import six
 
-from template_resolver import exceptions, token
+from templater import exceptions, token
 
 
 class Template(object):

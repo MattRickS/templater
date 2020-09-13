@@ -1,11 +1,11 @@
 import mock
 import pytest
 
-from template_resolver import exceptions, pathtemplate, resolver, template, token
+from templater import exceptions, pathtemplate, resolver, template, token
 
 
-@mock.patch("template_resolver.resolver.template")
-@mock.patch("template_resolver.resolver.token")
+@mock.patch("templater.resolver.template")
+@mock.patch("templater.resolver.token")
 def test_from_config(mock_token_module, mock_template_module):
     resolver_obj = resolver.TemplateResolver.from_config(
         {

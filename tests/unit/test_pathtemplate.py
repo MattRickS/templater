@@ -1,6 +1,6 @@
 import os
 
-from template_resolver import pathtemplate, token
+from templater import pathtemplate, token
 
 
 def test_extract_relative():

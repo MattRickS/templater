@@ -38,7 +38,7 @@ TODO: Add "choices" and "case"
 Custom tokens and templates can be defined and added as part of a custom resolver. The example below demonstrates how to add a custom template for templates with deprecated values, ie, a template with a removed token that needs to still parse the full set of values "{prefix}\_{key}\_{value}" -> "{key}\_{value}"
 
 ```python
-from template_resolver import resolver, template
+from templater import resolver, template
 
 
 class DeprecatedTemplate(template.Template):

@@ -1,7 +1,7 @@
 import glob
 import os
 
-from template_resolver import constants, exceptions, template
+from templater import constants, exceptions, template
 
 
 class PathTemplate(template.Template):

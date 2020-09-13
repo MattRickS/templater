@@ -1,12 +1,12 @@
 import six
 
-from template_resolver import constants, exceptions
+from templater import constants, exceptions
 
 
 def format_string_debugger(template, string, debug_exc):
     """
     Args:
-        template (template_resolver.template.Template): Template that raised the
+        template (templater.template.Template): Template that raised the
             error
         string (str): String that failed to parse
         debug_exc (exceptions.DebugParseError): Exception raised during

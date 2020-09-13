@@ -1,6 +1,6 @@
 import pytest
 
-from template_resolver import constants, exceptions, template, token, util
+from templater import constants, exceptions, template, token, util
 
 
 @pytest.mark.parametrize(

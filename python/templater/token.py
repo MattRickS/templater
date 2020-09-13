@@ -1,6 +1,6 @@
 import re
 
-from template_resolver import constants, exceptions, util
+from templater import constants, exceptions, util
 
 
 class Token(object):

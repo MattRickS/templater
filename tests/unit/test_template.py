@@ -1,6 +1,6 @@
 import pytest
 
-from template_resolver import exceptions, template, token
+from templater import exceptions, template, token
 
 
 class TestTemplate(object):
