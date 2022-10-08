@@ -46,20 +46,27 @@ class TemplateResolver:
         return resolver_obj
 
     @classmethod
-    def get_template_cls(cls, template_type: str, **kwargs) -> Type[template.Template]:
+    def construct_template(
+        cls, template_type: str, name: str, segments, **kwargs
+    ) -> template.Template:
         """
         Args:
-            template_type: String name of the template type
+            template_type: Template group name
+            name: Name of the template to create
+            segments: List of segments in the template
+
+        Keyword Args:
+            kwargs: Any additional arguments to the class
 
         Returns:
-            Template class the name represents
+            Constructed template
         """
         if template_type == constants.TEMPLATE_TYPE_PATH:
             token_cls = pathtemplate.PathTemplate
         else:
             token_cls = template.Template
 
-        return token_cls
+        return token_cls(name, segments, **kwargs)
 
     @classmethod
     def get_token_cls(cls, token_type: str) -> Type[token.Token]:
@@ -118,9 +125,8 @@ class TemplateResolver:
                 template configs. If creating a template which references
                 additional templates that does not exist yet, the resolver will
                 try to recursively construct templates from this config.
-            kwargs: Any additional keyword arguments to provide to the template
-                class. Also provided to `get_template_cls` when determining
-                which class to use.
+            kwargs: Any additional keyword arguments to provide to the
+                `construct_template` method.
 
         Returns:
             Created template object stored in the resolver
@@ -173,8 +179,7 @@ class TemplateResolver:
         if last_string_segment:
             segments.append(last_string_segment)
 
-        template_cls = self.get_template_cls(template_type, **kwargs)
-        template_obj = template_cls(template_name, segments, **kwargs)
+        template_obj = self.construct_template(template_type, template_name, segments, **kwargs)
         self._templates.setdefault(template_type, {})[template_name] = template_obj
         return template_obj
 

@@ -21,6 +21,9 @@ class Template:
     def __str__(self):
         return ":".join((self._name, self.pattern()))
 
+    def __eq__(self, template: Template) -> bool:
+        return self.name == template.name and self._segments == template._segments
+
     @property
     def name(self) -> str:
         """

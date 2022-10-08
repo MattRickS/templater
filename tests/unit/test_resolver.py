@@ -51,10 +51,16 @@ def test_from_config(mock_token_module, mock_template_module):
     }
 
 
-def test_get_template_cls():
-    assert resolver.TemplateResolver.get_template_cls("string") == template.Template
-    assert resolver.TemplateResolver.get_template_cls("path") == pathtemplate.PathTemplate
-    assert resolver.TemplateResolver.get_template_cls("unknown") == template.Template
+def test_construct_template():
+    assert resolver.TemplateResolver.construct_template("string", "test", []) == template.Template(
+        "test", []
+    )
+    assert resolver.TemplateResolver.construct_template(
+        "path", "test", []
+    ) == pathtemplate.PathTemplate("test", [])
+    assert resolver.TemplateResolver.construct_template("unknown", "test", []) == template.Template(
+        "test", []
+    )
 
 
 def test_get_token_cls():

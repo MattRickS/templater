@@ -118,7 +118,7 @@ When constructing from a configuration, if the regex and format_spec are not exp
 
 ## Extending templates
 
-Custom tokens and templates can be defined and added as part of a custom resolver. To support this, configuration allows providing a dictionary to each template key and uses the "string" key as the template pattern, passing any additional keywords to the `get_template_cls` and class init method.
+Custom tokens and templates can be defined and added as part of a custom resolver. To support this, configuration allows providing a dictionary to each template key and uses the "string" key as the template pattern, passing any additional keywords to the `construct_template` method.
 
 The example below demonstrates how to add a custom template for templates with deprecated values, ie, a template with a removed token that needs to still parse the full set of values "{prefix}\_{key}\_{value}" -> "{key}\_{value}".
 
@@ -144,14 +144,11 @@ class DeprecatedTemplate(template.Template):
 
 class MyTemplateResolver(resolver.TemplateResolver):
     @classmethod
-    def get_template_cls(cls, template_type, **kwargs):
+    def construct_template(cls, template_type, name, segments, **kwargs):
         if "static_fields" in kwargs:
-            template_cls = DeprecatedTemplate
+            return DeprecatedTemplate(name, segments, static_fields=static_fields)
         else:
-            template_cls = super(MyTemplateResolver, cls).get_template_cls(
-                template_type
-            )
-        return template_cls
+            return super().construct_template(template_type, name, segments, **kwargs)
 
 
 my_resolver = MyTemplateResolver()
