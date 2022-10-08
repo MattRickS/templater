@@ -59,7 +59,9 @@ print(error)
 #                ^
 ```
 
-Templates can be configuration defined and managed by a TemplateResolver
+Templates can be configuration defined and managed by a TemplateResolver. Templates are grouped by mostly arbitrary types, which allows reusing a template name for different uses as well as overriding the Template class to use. The default package only provides one override type; templates defined under "path" use the PathTemplate.
+
+Segments are referenced using bracketed syntax, eg, `{segmentname}`. The name in the brackets references a token unless it's preceeded by an `@` symbol in which case it references a template, eg, `{@templatename}`. The template name is looked up within the same template group. To reference a template from another group (or to be explicit), prefix with a group name and a `.` separator, eg, `{@group.templatename}`.
 ```python
 from templater import resolver
 manager = resolver.TemplateResolver.from_config(
@@ -70,14 +72,18 @@ manager = resolver.TemplateResolver.from_config(
             "hobby": "str",
         },
         "templates": {
-            "intro": "{name} is {age} years old",
-            "extended_into": "{@intro}. He likes to {hobby}.",
+            "foo": {
+                "intro": "{name} is {age} years old"
+            },
+            "bar": {
+                "extended_into": "{@foo.intro}. He likes to {hobby}."
+            }
         },
     }
 )
-intro = manager.template("intro")
+intro = manager.template("foo", "intro")
 fields = intro.parse("Tim is 3 years old")
-extended_into = manager.template("extended_into")
+extended_into = manager.template("bar", "extended_into")
 fields["age"] += 2
 fields["hobby"] = "swim"
 extended_into.format(fields)
