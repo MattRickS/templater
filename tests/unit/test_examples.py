@@ -25,12 +25,11 @@ def test_template():
     }
     assert example_template.pattern() == "/FIXED_STRING/{tokenA}/{tokenB}{tokenC}"
     assert (
-        example_template.pattern(formatters=True)
-        == "/FIXED_STRING/{tokenA:s}/{tokenB:s}{tokenC:d}"
+        example_template.pattern(formatters=True) == "/FIXED_STRING/{tokenA:s}/{tokenB:s}{tokenC:d}"
     )
     assert (
         example_template.regex()
-        == r"\/FIXED_STRING\/(?P<tokenA>[a-zA-Z]+)\/(?P<tokenB>[a-zA-Z]+)(?P<tokenC>[0-9]+)"
+        == r"/FIXED_STRING/(?P<tokenA>[a-zA-Z]+)/(?P<tokenB>[a-zA-Z]+)(?P<tokenC>[0-9]+)"
     )
     assert example_template.tokens() == [token_a, token_b, token_c]
 
@@ -39,9 +38,7 @@ def test_template():
         "templateB", ["/start", example_template, "/", token_d, "/", token_a, "/end"]
     )
     assert (
-        parent_template.format(
-            {"tokenA": "abc", "tokenB": "def", "tokenC": 1, "tokenD": "ghi"}
-        )
+        parent_template.format({"tokenA": "abc", "tokenB": "def", "tokenC": 1, "tokenD": "ghi"})
         == "/start/FIXED_STRING/abc/def1/ghi/abc/end"
     )
     assert parent_template.segments() == [
@@ -120,18 +117,8 @@ def test_resolver():
 
     assert t_resolver.template("root").pattern() == "{str}_{int}"
     assert t_resolver.template("parent").pattern() == "{str}_{int}_{str}"
-    assert (
-        t_resolver.template("name").pattern(formatters=True)
-        == "{str:s}_{int:d}_{int_pad:0=3d}"
-    )
-    assert (
-        t_resolver.template("parent").format({"int": 50, "str": "abc"}) == "abc_50_abc"
-    )
-    assert (
-        t_resolver.template("example").format({"int": 50, "lowerCase": "abcDef"})
-        == "abcDef_50"
-    )
+    assert t_resolver.template("name").pattern(formatters=True) == "{str:s}_{int:d}_{int_pad:0=3d}"
+    assert t_resolver.template("parent").format({"int": 50, "str": "abc"}) == "abc_50_abc"
+    assert t_resolver.template("example").format({"int": 50, "lowerCase": "abcDef"}) == "abcDef_50"
     assert t_resolver.template("opt_template").parse("prefix_abc") == {"options": "abc"}
-    assert (
-        t_resolver.template("opt_template").format({"options": "def"}) == "prefix_def"
-    )
+    assert t_resolver.template("opt_template").format({"options": "def"}) == "prefix_def"

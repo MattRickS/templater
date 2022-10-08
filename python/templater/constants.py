@@ -1,16 +1,16 @@
-class Case(object):
+class Case:
     Lower = "lower"
     LowerCamel = "lowerCamel"
     Upper = "upper"
     UpperCamel = "UpperCamel"
 
 
-class TokenType(object):
+class TokenType:
     String = "str"
     Int = "int"
 
 
-class TemplateType(object):
+class TemplateType:
     Standard = "template"
     Path = "path"
 

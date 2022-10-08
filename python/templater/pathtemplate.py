@@ -1,79 +1,81 @@
 import glob
 import os
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from templater import constants, exceptions, template
 
 
 class PathTemplate(template.Template):
-    def extract_relative(self, path):
+    def extract_relative(self, path: str) -> Tuple[Dict[str, Any], str]:
         """
         Args:
-            path (str): Path to extract the template from
+            path: Path to extract the template from
 
         Returns:
-            tuple[dict, str]: Dictionary of fields extracted and the relative
-                path remainder with leading separators stripped
+            Dictionary of fields extracted and the relative path remainder with
+                leading separators stripped
         """
         agnostic_path = path.replace("\\", "/")
         fields, end = self.extract(agnostic_path)
         relative_path = agnostic_path[end:].lstrip("/")
         return fields, os.path.normpath(relative_path)
 
-    def format(self, fields, unformatted=None, use_defaults=True):
+    def format(
+        self, fields: Dict[str, Any], unformatted: Dict[str, str] = None, use_defaults: bool = True
+    ) -> str:
         """
         Raises:
             exceptions.FormatError: If the fields don't match the template
 
         Args:
-            fields (dict): Dictionary of fields to format the template with,
-                must match tokens
+            fields: Dictionary of fields to format the template with, must match
+                tokens
 
         Keyword Args:
-            unformatted (dict[str, str]): List of field names to skip formatting
-                and use a wildcard symbol for
-            use_defaults (bool): Whether or not to use token's default values
-                for missing fields.
+            unformatted: List of field names to skip formatting and use a
+                wildcard symbol for
+            use_defaults: Whether or not to use token's default values for
+                missing fields.
 
         Returns:
-            str: OS path
+            OS path
         """
         path = super(PathTemplate, self).format(
             fields, unformatted=unformatted, use_defaults=use_defaults
         )
         return os.path.normpath(path)
 
-    def parse(self, string):
+    def parse(self, string: str) -> Dict[str, Any]:
         """
         Raises:
             exceptions.ParseError: If the string doesn't match the template
                 exactly
 
         Args:
-            string (str): String to parse the template tokens from
+            string: String to parse the template tokens from
 
         Returns:
-            dict: Dictionary of fields extracted from the tokens
+            Dictionary of fields extracted from the tokens
         """
         agnostic_path = string.replace("\\", "/")
         return super(PathTemplate, self).parse(agnostic_path)
 
-    def paths(self, fields, wildcards=None):
+    def paths(
+        self, fields: Dict[str, Any], wildcards: List[str] = None
+    ) -> Iterable[Tuple[Dict[str, Any], str]]:
         """
         Args:
-            fields (dict): Token names matched to values
+            fields: Token names matched to values
 
         Keyword Args:
-            wildcards (list[str]): List of field names to wildcard
+            wildcards: List of field names to wildcard
 
         Returns:
-            Iterable[tuple[dict, str]]: Iterable of matching paths and their
-                fields
+            Iterable of matching paths and their fields
         """
         path_string = self.format(
             fields,
-            unformatted={
-                field: constants.SYMBOL_PATH_WILDCARD for field in wildcards or ()
-            },
+            unformatted={field: constants.SYMBOL_PATH_WILDCARD for field in wildcards or ()},
         )
         for path in glob.iglob(path_string):
             agnostic_path = path.replace("\\", "/")
@@ -84,10 +86,10 @@ class PathTemplate(template.Template):
             else:
                 yield path, fields
 
-    def root_template(self):
+    def root_template(self) -> Union[template.Template, None]:
         """
         Returns:
-            template.Template|None: Leading child template (if any)
+            Leading child template (if any)
         """
         first_segment = self._segments[0]
         if isinstance(first_segment, template.Template):

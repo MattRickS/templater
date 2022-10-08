@@ -1,18 +1,21 @@
+from __future__ import annotations
+
 import os
 import re
+from typing import Iterable, List, Type
 
 from templater import constants, exceptions, pathtemplate, template, token
 
 
-class TemplateResolver(object):
+class TemplateResolver:
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: dict) -> TemplateResolver:
         """
         Args:
-            config (dict): Dictionary containing token and template definitions
+            config: Dictionary containing token and template definitions
 
         Returns:
-            TemplateResolver: Resolver with the template configurations loaded
+            Resolver with the template configurations loaded
         """
         token_config = config[constants.KEY_TOKENS]
         template_config = config[constants.KEY_TEMPLATES]
@@ -39,40 +42,36 @@ class TemplateResolver(object):
                 template_data[constants.KEY_STRING] = os.path.expandvars(
                     template_data[constants.KEY_STRING]
                 )
-                resolver_obj.create_template(
-                    name, template_data, reference_config=template_config
-                )
+                resolver_obj.create_template(name, template_data, reference_config=template_config)
 
         return resolver_obj
 
     @classmethod
-    def get_template_cls(cls, template_type):
+    def get_template_cls(cls, template_type: str) -> Type[template.Template]:
         """
         Args:
-            template_type (str): String name of the template type
+            template_type: String name of the template type
 
         Returns:
-            Type[token.Template]: Template class the name represents
+            Template class the name represents
         """
         if template_type == constants.TemplateType.Standard:
             token_cls = template.Template
         elif template_type == constants.TemplateType.Path:
             token_cls = pathtemplate.PathTemplate
         else:
-            raise exceptions.ResolverError(
-                "Unknown template type: {}".format(template_type)
-            )
+            raise exceptions.ResolverError("Unknown template type: {}".format(template_type))
 
         return token_cls
 
     @classmethod
-    def get_token_cls(cls, token_type):
+    def get_token_cls(cls, token_type: str) -> Type[token.Token]:
         """
         Args:
-            token_type (str): String name of the token type
+            token_type: String name of the token type
 
         Returns:
-            Type[token.Token]: Token class the name represents
+            Token class the name represents
         """
         if token_type == constants.TokenType.Int:
             token_cls = token.IntToken
@@ -83,41 +82,43 @@ class TemplateResolver(object):
 
         return token_cls
 
-    def __init__(self, tokens=None, templates=None):
+    def __init__(
+        self, tokens: Iterable[token.Token] = None, templates: Iterable[template.Template] = None
+    ):
         """
         Args:
-            tokens (Iterable[token.Token]): Iterable of unique token objects
-            templates (Iterable[template.Template]): Iterable of unique template
-                objects
+            tokens: Iterable of unique token objects
+            templates: Iterable of unique template objects
         """
         # Must be created before the dict comprehension
         self._templates = {t.name: t for t in templates or ()}
         self._tokens = {t.name: t for t in tokens or ()}
 
-    def create_template(self, template_name, template_config, reference_config=None):
+    # TODO: Replace template_config with args
+    def create_template(
+        self, template_name: str, template_config: dict, reference_config: dict = None
+    ) -> template.Template:
         """
         Raises:
             exceptions.ResolverError: If the template string references a
                 non-existent value
 
         Args:
-            template_name (str): Name of the template to create
-            template_config (dict): Dictionary of template data with a minimum
+            template_name: Name of the template to create
+            template_config: Dictionary of template data with a minimum
                 of a "type" and "string" key
 
         Keyword Args:
-            reference_config (dict): Dictionary of template names mapped to
+            reference_config: Dictionary of template names mapped to
                 template configs. If creating a template which references
                 additional templates that does not exist yet, the resolver will
                 try to recursively construct templates from this config.
 
         Returns:
-            template.Template: Created template object stored in the resolver
+            Created template object stored in the resolver
         """
         if template_name in self._templates:
-            raise exceptions.ResolverError(
-                "Template '{}' already exists".format(template_name)
-            )
+            raise exceptions.ResolverError("Template '{}' already exists".format(template_name))
 
         template_type = template_config[constants.KEY_TYPE]
         template_string = template_config[constants.KEY_STRING]
@@ -147,9 +148,7 @@ class TemplateResolver(object):
                 token_obj = self.token(name)
                 segments.append(token_obj)
             else:
-                raise exceptions.ResolverError(
-                    "Unknown token symbol: {}".format(symbol)
-                )
+                raise exceptions.ResolverError("Unknown token symbol: {}".format(symbol))
 
         # If it ends with a fixed string, ensure the remainder is added
         last_string_segment = template_string[index:]
@@ -161,23 +160,20 @@ class TemplateResolver(object):
         self._templates[template_name] = template_obj
         return template_obj
 
-    def create_token(self, token_name, token_config):
+    def create_token(self, token_name: str, token_config: dict) -> token.Token:
         """
         Raises:
             exceptions.ResolverError: If the token data is invalid
 
         Args:
-            token_name (str): Name of the token to create
-            token_config (dict): Dictionary of token data, with a minimum of a
-                "type" key.
+            token_name: Name of the token to create
+            token_config: Dictionary of token data, with a minimum of a "type" key.
 
         Returns:
-            token.Token: Created token object stored in the resolver
+            Created token object stored in the resolver
         """
         if token_name in self._tokens:
-            raise exceptions.ResolverError(
-                "Token '{}' already exists".format(token_name)
-            )
+            raise exceptions.ResolverError("Token '{}' already exists".format(token_name))
 
         token_type = token_config[constants.KEY_TYPE]
         token_cls = self.get_token_cls(token_type)
@@ -196,16 +192,13 @@ class TemplateResolver(object):
         self._tokens[token_name] = token_obj
         return token_obj
 
-    def template(self, name):
+    def template(self, name: str) -> template.Template:
         """
         Raises:
             exceptions.ResolverError: If no template exists matching the name
 
         Args:
-            name (str): Name of the template to get
-
-        Returns:
-            template.Template:
+            name: Name of the template to get
         """
         template_obj = self._templates.get(name)
         if template_obj is None:
@@ -214,40 +207,35 @@ class TemplateResolver(object):
             )
         return template_obj
 
-    def token(self, name):
+    def token(self, name: str) -> token.Token:
         """
         Raises:
             exceptions.ResolverError: If no token exists matching the name
 
         Args:
-            name (str): Name of the token to get
-
-        Returns:
-            token.Token:
+            name: Name of the token to get
         """
         token_obj = self._tokens.get(name)
         if token_obj is None:
-            raise exceptions.ResolverError(
-                "Requested token name does not exist: {}".format(name)
-            )
+            raise exceptions.ResolverError("Requested token name does not exist: {}".format(name))
         return token_obj
 
-    def has_template(self, name):
+    def has_template(self, name: str) -> bool:
         """
         Args:
-            name (str): Name of a template
+            name: Name of a template
 
         Returns:
-            bool: Whether or not the resolver has a template matching the name
+            Whether or not the resolver has a template matching the name
         """
         return name in self._templates
 
-    def has_token(self, name):
+    def has_token(self, name: str) -> bool:
         """
         Args:
-            name (str): Name of a token
+            name: Name of a token
 
         Returns:
-            bool: Whether or not the resolver has a token matching the name
+            Whether or not the resolver has a token matching the name
         """
         return name in self._tokens

@@ -1,19 +1,23 @@
 import six
+from typing import TYPE_CHECKING
 
 from templater import constants, exceptions
 
+if TYPE_CHECKING:
+    from templater.template import Template
 
-def format_string_debugger(template, string, debug_exc):
+
+def format_string_debugger(
+    template: "Template", string: str, debug_exc: exceptions.DebugParseError
+) -> str:
     """
     Args:
-        template (templater.template.Template): Template that raised the
-            error
-        string (str): String that failed to parse
-        debug_exc (exceptions.DebugParseError): Exception raised during
-            debugging
+        template: Template that raised the error
+        string: String that failed to parse
+        debug_exc: Exception raised during debugging
 
     Returns:
-        str: Formatted error message that pinpoints the error
+        Formatted error message that pinpoints the error
     """
     segments = template.segments()
     if debug_exc.segment_index >= len(segments):
@@ -23,9 +27,7 @@ def format_string_debugger(template, string, debug_exc):
         validate_message = [
             "String '{}' does not match".format(segment)
             if isinstance(segment, six.string_types)
-            else "Token '{}' does not match: {}".format(
-                segment.name, segment.description
-            )
+            else "Token '{}' does not match: {}".format(segment.name, segment.description)
         ]
     prefix_string = "Pattern: "
     indent = len(prefix_string)
@@ -35,13 +37,13 @@ def format_string_debugger(template, string, debug_exc):
     return "\n".join(validate_message)
 
 
-def get_case_regex(case):
+def get_case_regex(case: str) -> str:
     """
     Args:
-        case (str): Name of the case to construct a regex for
+        case: Name of the case to construct a regex for
 
     Returns:
-        str: Regex pattern for parsing the case - does not include padding
+        Regex pattern for parsing the case - does not include padding
     """
     if case == constants.Case.Lower:
         regex = "[a-z]"
@@ -57,26 +59,22 @@ def get_case_regex(case):
     return regex
 
 
-def get_regex_padding(padmin=None, padmax=None):
+def get_regex_padding(padmin: int = None, padmax: int = None) -> str:
     """
     Gets a regex pattern for enforcing padding size on other patterns. Defaults
     to an unlimited size (minimum 1) if neither value is provided.
 
     Args:
-        padmin (int): Minimum number of characters required
-        padmax (int): Maximum number of characters allowed
+        padmin: Minimum number of characters required
+        padmax: Maximum number of characters allowed
 
     Returns:
-        str: Regex padding symbol(s) to append to a regex pattern
+        Regex padding symbol(s) to append to a regex pattern
     """
     if padmin is not None and padmin < 0:
-        raise exceptions.ResolverError(
-            "Padmin cannot be less than 0: {}".format(padmin)
-        )
+        raise exceptions.ResolverError("Padmin cannot be less than 0: {}".format(padmin))
     if padmax is not None and padmax < 0:
-        raise exceptions.ResolverError(
-            "Padmax cannot be less than 0: {}".format(padmax)
-        )
+        raise exceptions.ResolverError("Padmax cannot be less than 0: {}".format(padmax))
 
     if padmin is not None and padmax is not None:
         if padmax < padmin:
