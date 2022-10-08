@@ -1,27 +1,25 @@
 class FormatError(Exception):
-    """ Errors with formatting values into strings """
+    """Errors with formatting values into strings"""
 
 
 class MissingTokenError(FormatError):
-    """ Errors with missing token fields """
+    """Errors with missing token fields"""
 
     def __init__(self, token_name):
-        super(MissingTokenError, self).__init__(
-            "Missing required token: {}".format(token_name)
-        )
+        super(MissingTokenError, self).__init__(f"Missing required token: {token_name}")
         self.token_name = token_name
 
 
 class ParseError(Exception):
-    """ Errors with parsing a string into values """
+    """Errors with parsing a string into values"""
 
 
 class ResolverError(Exception):
-    """ Errors raised with the TemplateResolver construction """
+    """Errors raised with the TemplateResolver construction"""
 
 
 class DebugParseError(ParseError):
-    """ Debug error for more accurate error reporting """
+    """Debug error for more accurate error reporting"""
 
     def __init__(self, message, char_index, segment_index, partial_fields):
         """
@@ -38,8 +36,8 @@ class DebugParseError(ParseError):
 
 
 class MismatchTokenError(DebugParseError):
-    """ Debug error for two tokens who match different values """
+    """Debug error for two tokens who match different values"""
 
 
 class ExcessStringError(DebugParseError):
-    """ Debug error for when a template matches but the whole string is not consumed """
+    """Debug error for when a template matches but the whole string is not consumed"""

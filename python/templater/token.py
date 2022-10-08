@@ -22,7 +22,7 @@ class Token:
         if not description:
             choices = config.get("choices")
             if choices:
-                description = "Must be one of: {}".format(choices)
+                description = f"Must be one of: {choices}"
         return description
 
     @classmethod
@@ -86,15 +86,15 @@ class Token:
             default: Default value to use for the token if no value is provided
         """
         self._name = name
-        self._pattern = re.compile("^{}$".format(regex))
+        self._pattern = re.compile(f"^{regex}$")
         self._format_spec = format_spec
         self._description = description or ""
         self._default = default
 
     def __repr__(self) -> str:
         return (
-            "{s.__class__.__name__}({s.name!r}, {regex!r}, {s.format_spec!r}, "
-            "description={s.description!r}, default={s.default})".format(s=self, regex=self.regex())
+            f"{self.__class__.__name__}({self.name!r}, {self.regex()!r}, {self.format_spec!r}, "
+            f"description={self.description!r}, default={self.default})"
         )
 
     def __str__(self) -> str:
@@ -147,14 +147,12 @@ class Token:
         try:
             string = formatter.format(value)
         except ValueError:
-            raise exceptions.FormatError("Value {!r} does not match {!r}".format(value, self))
+            raise exceptions.FormatError(f"Value {value!r} does not match {self!r}")
 
         try:
             self.parse(string)
         except (ValueError, exceptions.ParseError):
-            raise exceptions.FormatError(
-                "Value as string {!r} does not match {!r}".format(string, self)
-            )
+            raise exceptions.FormatError(f"Value as string {string!r} does not match {self!r}")
         return string
 
     def parse(self, string: str) -> Any:
@@ -170,9 +168,7 @@ class Token:
         """
         matched = self._pattern.match(string)
         if matched is None:
-            raise exceptions.ParseError(
-                "String '{}' does not match token {!r}".format(string, self)
-            )
+            raise exceptions.ParseError(f"String '{string}' does not match token {self!r}")
 
         value = self.value_from_parsed_string(string)
         return value
@@ -211,11 +207,11 @@ class IntToken(Token):
             padmin = config.get("padmin")
             padmax = config.get("padmax")
             if padmin is not None and padmin == padmax:
-                description = "Must be a {}-digit integer".format(padmin)
+                description = f"Must be a {padmin}-digit integer"
             elif padmin is not None:
-                description = "Must be a minimum {}-digit integer".format(padmin)
+                description = f"Must be a minimum {padmin}-digit integer"
             elif padmax is not None:
-                description = "Must be a maximum {}-digit integer".format(padmax)
+                description = f"Must be a maximum {padmax}-digit integer"
             else:
                 description = "Must be an integer"
         return description
@@ -267,7 +263,7 @@ class IntToken(Token):
             return int(string)
         except ValueError:
             raise exceptions.ParseError(
-                "String '{}' does not match int token '{}'".format(string, self._name)
+                f"String '{string}' does not match int token '{self._name}'"
             )
 
 
@@ -290,16 +286,16 @@ class StringToken(Token):
             padmin = config.get("padmin")
             padmax = config.get("padmax")
             case = config.get("case")
-            case = "{} case ".format(case) if case else ""
+            case = f"{case} case " if case else ""
 
             if padmin is not None and padmin == padmax:
-                description = "Must be a {}-character {}string".format(padmin, case)
+                description = f"Must be a {padmin}-character {case}string"
             elif padmin is not None:
-                description = "Must be a minimum {}-character {}string".format(padmin, case)
+                description = f"Must be a minimum {padmin}-character {case}string"
             elif padmax is not None:
-                description = "Must be a maximum {}-character {}string".format(padmax, case)
+                description = f"Must be a maximum {padmax}-character {case}string"
             else:
-                description = "Must be a {}string".format(case)
+                description = f"Must be a {case}string"
         return description
 
     @classmethod

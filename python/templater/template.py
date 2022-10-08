@@ -16,7 +16,7 @@ class Template:
         self._segments = segments
 
     def __repr__(self):
-        return "{s.__class__.__name__}({s._name!r}, {s._segments})".format(s=self)
+        return f"{self.__class__.__name__}({self._name!r}, {self._segments})"
 
     def __str__(self):
         return ":".join((self._name, self.pattern()))
@@ -101,7 +101,7 @@ class Template:
                 else:
                     string_segment = segment.format(fields[segment.name])
             else:
-                raise TypeError("Unknown segment type: {}".format(segment))
+                raise TypeError(f"Unknown segment type: {segment}")
             segments.append(string_segment)
         return "".join(segments)
 
@@ -117,7 +117,7 @@ class Template:
         Returns:
             Dictionary of fields extracted from the tokens
         """
-        regex = "^{}$".format(self.regex())
+        regex = f"^{self.regex()}$"
         fields, _ = self._parse(regex, string)
         return fields
 
@@ -138,8 +138,7 @@ class Template:
         """
         segments = self.segments()
         regexes = [
-            "({})".format(segment if isinstance(segment, str) else segment.regex())
-            for segment in segments
+            f"({segment if isinstance(segment, str) else segment.regex()})" for segment in segments
         ]
         num_segments = len(segments)
 
@@ -166,9 +165,7 @@ class Template:
                     # Remove the invalid field before raising
                     previous_value = fields.pop(segment.name)
                     raise exceptions.MismatchTokenError(
-                        "Mismatched values for token {{{}}}: {} != {}".format(
-                            segment.name, previous_value, value
-                        ),
+                        f"Mismatched values for token {{{segment.name}}}: {previous_value} != {value}",
                         char_index,
                         i,
                         fields,
@@ -178,8 +175,8 @@ class Template:
 
             # Matched on the first pattern, ie, the whole template
             if segment_index == num_segments:
-                start, end = match.span(0)
                 if match.group(0) != string:
+                    _, end = match.span(0)
                     raise exceptions.ExcessStringError(
                         "Template matches string with remainder",
                         end,
@@ -197,13 +194,9 @@ class Template:
                     if a != b:
                         break
 
+            segname = f"'{segment}'" if isinstance(segment, str) else f"{{{segment.name}}}"
             raise exceptions.DebugParseError(
-                "Match fails at segment ({}) {}".format(
-                    segment_index,
-                    "'{}'".format(segment)
-                    if isinstance(segment, str)
-                    else "{{{}}}".format(segment.name),
-                ),
+                f"Match fails at segment ({segment_index}) {segname}",
                 char_index,
                 segment_index,
                 fields,
@@ -230,13 +223,13 @@ class Template:
                 string_segment = segment
             elif isinstance(segment, token.Token):
                 if formatters:
-                    string_segment = "{{{}:{}}}".format(segment.name, segment.format_spec)
+                    string_segment = f"{{{segment.name}:{segment.format_spec}}}"
                 else:
-                    string_segment = "{{{}}}".format(segment.name)
+                    string_segment = f"{{{segment.name}}}"
             elif isinstance(segment, Template):
                 string_segment = segment.pattern(formatters=formatters)
             else:
-                raise TypeError("Unknown segment type: {}".format(segment))
+                raise TypeError(f"Unknown segment type: {segment}")
             segments.append(string_segment)
         return "".join(segments)
 
@@ -254,12 +247,12 @@ class Template:
                 pattern = segment.regex(backreferences=backreferences)
             elif isinstance(segment, token.Token):
                 if segment.name in backreferences:
-                    pattern = "(?P={})".format(segment.name)
+                    pattern = f"(?P={segment.name})"
                 else:
-                    pattern = "(?P<{}>{})".format(segment.name, segment.regex())
+                    pattern = f"(?P<{segment.name}>{segment.regex()})"
                     backreferences.append(segment.name)
             else:
-                raise TypeError("Unknown segment type: {}".format(segment))
+                raise TypeError(f"Unknown segment type: {segment}")
             segments.append(pattern)
 
         return "".join(segments)
@@ -316,9 +309,7 @@ class Template:
     def _parse(self, regex: str, string: str) -> Tuple[Dict[str, Any], int]:
         match = re.match(regex, string)
         if not match:
-            raise exceptions.ParseError(
-                "String '{}' doesn't match template '{}'".format(string, self)
-            )
+            raise exceptions.ParseError(f"String '{string}' doesn't match template '{self}'")
 
         string_fields = match.groupdict()
         # Convert the string value to the token type

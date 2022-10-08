@@ -24,13 +24,13 @@ def format_string_debugger(
     else:
         segment = segments[debug_exc.segment_index]
         validate_message = [
-            "String '{}' does not match".format(segment)
+            f"String '{segment}' does not match"
             if isinstance(segment, str)
-            else "Token '{}' does not match: {}".format(segment.name, segment.description)
+            else f"Token '{segment.name}' does not match: {segment.description}"
         ]
     prefix_string = "Pattern: "
     indent = len(prefix_string)
-    validate_message.append("{}{}".format(prefix_string, template.pattern()))
+    validate_message.append(f"{prefix_string}{template.pattern()}")
     validate_message.append(" " * indent + string)
     validate_message.append(" " * (indent + debug_exc.char_index) + "^")
     return "\n".join(validate_message)
@@ -53,7 +53,7 @@ def get_case_regex(case: str) -> str:
     elif case == constants.Case.UpperCamel:
         regex = "[A-Z][a-zA-Z]"
     else:
-        raise exceptions.ResolverError("Unknown case: {}".format(case))
+        raise exceptions.ResolverError(f"Unknown case: {case}")
 
     return regex
 
@@ -71,14 +71,14 @@ def get_regex_padding(padmin: int = None, padmax: int = None) -> str:
         Regex padding symbol(s) to append to a regex pattern
     """
     if padmin is not None and padmin < 0:
-        raise exceptions.ResolverError("Padmin cannot be less than 0: {}".format(padmin))
+        raise exceptions.ResolverError(f"Padmin cannot be less than 0: {padmin}")
     if padmax is not None and padmax < 0:
-        raise exceptions.ResolverError("Padmax cannot be less than 0: {}".format(padmax))
+        raise exceptions.ResolverError(f"Padmax cannot be less than 0: {padmax}")
 
     if padmin is not None and padmax is not None:
         if padmax < padmin:
             raise exceptions.ResolverError(
-                "Padmax ({}) cannot be lower than padmin ({})".format(padmax, padmin)
+                f"Padmax ({padmax}) cannot be lower than padmin ({padmin})"
             )
         padding_str = "{%d,%d}" % (padmin, padmax)
     elif padmin is not None:

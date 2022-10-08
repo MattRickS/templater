@@ -60,7 +60,7 @@ class TemplateResolver:
         elif template_type == constants.TemplateType.Path:
             token_cls = pathtemplate.PathTemplate
         else:
-            raise exceptions.ResolverError("Unknown template type: {}".format(template_type))
+            raise exceptions.ResolverError(f"Unknown template type: {template_type}")
 
         return token_cls
 
@@ -78,7 +78,7 @@ class TemplateResolver:
         elif token_type == constants.TokenType.String:
             token_cls = token.StringToken
         else:
-            raise exceptions.ResolverError("Unknown token type: {}".format(token_type))
+            raise exceptions.ResolverError(f"Unknown token type: {token_type}")
 
         return token_cls
 
@@ -118,7 +118,7 @@ class TemplateResolver:
             Created template object stored in the resolver
         """
         if template_name in self._templates:
-            raise exceptions.ResolverError("Template '{}' already exists".format(template_name))
+            raise exceptions.ResolverError(f"Template '{template_name}' already exists")
 
         template_type = template_config[constants.KEY_TYPE]
         template_string = template_config[constants.KEY_STRING]
@@ -148,7 +148,7 @@ class TemplateResolver:
                 token_obj = self.token(name)
                 segments.append(token_obj)
             else:
-                raise exceptions.ResolverError("Unknown token symbol: {}".format(symbol))
+                raise exceptions.ResolverError(f"Unknown token symbol: {symbol}")
 
         # If it ends with a fixed string, ensure the remainder is added
         last_string_segment = template_string[index:]
@@ -173,7 +173,7 @@ class TemplateResolver:
             Created token object stored in the resolver
         """
         if token_name in self._tokens:
-            raise exceptions.ResolverError("Token '{}' already exists".format(token_name))
+            raise exceptions.ResolverError(f"Token '{token_name}' already exists")
 
         token_type = token_config[constants.KEY_TYPE]
         token_cls = self.get_token_cls(token_type)
@@ -202,9 +202,7 @@ class TemplateResolver:
         """
         template_obj = self._templates.get(name)
         if template_obj is None:
-            raise exceptions.ResolverError(
-                "Requested template name does not exist: {}".format(name)
-            )
+            raise exceptions.ResolverError(f"Requested template name does not exist: {name}")
         return template_obj
 
     def token(self, name: str) -> token.Token:
@@ -217,7 +215,7 @@ class TemplateResolver:
         """
         token_obj = self._tokens.get(name)
         if token_obj is None:
-            raise exceptions.ResolverError("Requested token name does not exist: {}".format(name))
+            raise exceptions.ResolverError(f"Requested token name does not exist: {name}")
         return token_obj
 
     def has_template(self, name: str) -> bool:
