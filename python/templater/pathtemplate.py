@@ -40,9 +40,7 @@ class PathTemplate(template.Template):
         Returns:
             OS path
         """
-        path = super(PathTemplate, self).format(
-            fields, unformatted=unformatted, use_defaults=use_defaults
-        )
+        path = super().format(fields, unformatted=unformatted, use_defaults=use_defaults)
         return os.path.normpath(path)
 
     def parse(self, string: str) -> Dict[str, Any]:
@@ -58,7 +56,7 @@ class PathTemplate(template.Template):
             Dictionary of fields extracted from the tokens
         """
         agnostic_path = string.replace("\\", "/")
-        return super(PathTemplate, self).parse(agnostic_path)
+        return super().parse(agnostic_path)
 
     def paths(
         self, fields: Dict[str, Any], wildcards: List[str] = None

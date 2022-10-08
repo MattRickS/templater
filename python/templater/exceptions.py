@@ -6,7 +6,7 @@ class MissingTokenError(FormatError):
     """Errors with missing token fields"""
 
     def __init__(self, token_name):
-        super(MissingTokenError, self).__init__(f"Missing required token: {token_name}")
+        super().__init__(f"Missing required token: {token_name}")
         self.token_name = token_name
 
 
@@ -29,7 +29,7 @@ class DebugParseError(ParseError):
             segment_index (int): Index for the segment in the template that failed
             partial_fields (dict): Dictionary of the fields matching so far
         """
-        super(DebugParseError, self).__init__(message)
+        super().__init__(message)
         self.char_index = char_index
         self.segment_index = segment_index
         self.fields = partial_fields

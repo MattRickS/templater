@@ -202,7 +202,7 @@ class IntToken(Token):
         Returns:
             Description message for the token
         """
-        description = super(IntToken, cls).get_description_from_config(config)
+        description = super().get_description_from_config(config)
         if description is None:
             padmin = config.get("padmin")
             padmax = config.get("padmax")
@@ -225,7 +225,7 @@ class IntToken(Token):
         Returns:
             Format spec for the token with the integer "d" appended
         """
-        format_spec = super(IntToken, cls).get_format_spec_from_config(config)
+        format_spec = super().get_format_spec_from_config(config)
         return format_spec + "d"
 
     def __init__(
@@ -247,9 +247,7 @@ class IntToken(Token):
             description: Description message
             default: Default value to use for the token if no value is provided
         """
-        super(IntToken, self).__init__(
-            name, regex, format_spec, description=description, default=default
-        )
+        super().__init__(name, regex, format_spec, description=description, default=default)
 
     def value_from_parsed_string(self, string: str) -> int:
         """
@@ -281,7 +279,7 @@ class StringToken(Token):
         Returns:
             Description message for the token
         """
-        description = super(StringToken, cls).get_description_from_config(config)
+        description = super().get_description_from_config(config)
         if description is None:
             padmin = config.get("padmin")
             padmax = config.get("padmax")
@@ -309,7 +307,7 @@ class StringToken(Token):
         """
         # Enable strict padding by default unless set
         config.setdefault("padstrict", True)
-        format_spec = super(StringToken, cls).get_format_spec_from_config(config)
+        format_spec = super().get_format_spec_from_config(config)
         return format_spec + "s"
 
     @classmethod
@@ -335,7 +333,7 @@ class StringToken(Token):
         elif case is not None:
             raise exceptions.ResolverError("Cannot use construction keywords with explicit regex")
         else:
-            regex = super(StringToken, cls).get_regex_from_config(config)
+            regex = super().get_regex_from_config(config)
         return regex
 
     def __init__(
@@ -357,6 +355,4 @@ class StringToken(Token):
             description: Description message
             default: Default value to use for the token if no value is provided
         """
-        super(StringToken, self).__init__(
-            name, regex, format_spec, description=description, default=default
-        )
+        super().__init__(name, regex, format_spec, description=description, default=default)
