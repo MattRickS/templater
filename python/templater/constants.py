@@ -11,7 +11,7 @@ class TokenType:
 
 
 class TemplateType:
-    Standard = "template"
+    String = "string"
     Path = "path"
 
 

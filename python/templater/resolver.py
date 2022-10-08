@@ -46,7 +46,7 @@ class TemplateResolver:
         Returns:
             Template class the name represents
         """
-        if template_type == constants.TemplateType.Standard:
+        if template_type == constants.TemplateType.String:
             token_cls = template.Template
         elif template_type == constants.TemplateType.Path:
             token_cls = pathtemplate.PathTemplate
@@ -86,7 +86,7 @@ class TemplateResolver:
         """
         self._tokens = {t.name: t for t in tokens or ()}
         self._templates = {
-            constants.TemplateType.Standard: {t.name: t for t in string_templates or ()},
+            constants.TemplateType.String: {t.name: t for t in string_templates or ()},
             constants.TemplateType.Path: {t.name: t for t in path_templates or ()},
         }
 

@@ -1,6 +1,6 @@
 import pytest
 
-from templater import exceptions, resolver, template, token
+from templater import constants, exceptions, resolver, template, token
 
 
 def test_template():
@@ -93,7 +93,7 @@ def test_resolver():
                 "options": {"type": "str", "choices": ["abc", "def"]},
             },
             "templates": {
-                "template": {
+                "string": {
                     "root": "{str}_{int}",
                     "parent": "{@root}_{str}",
                     "example": "{lowerCase}_{int}",
@@ -117,20 +117,33 @@ def test_resolver():
     with pytest.raises(exceptions.FormatError):
         lower_case_token.format("AbcDef")
 
-    assert t_resolver.template("template", "root").pattern() == "{str}_{int}"
-    assert t_resolver.template("template", "parent").pattern() == "{str}_{int}_{str}"
+    assert t_resolver.template(constants.TemplateType.String, "root").pattern() == "{str}_{int}"
     assert (
-        t_resolver.template("template", "name").pattern(formatters=True)
+        t_resolver.template(constants.TemplateType.String, "parent").pattern()
+        == "{str}_{int}_{str}"
+    )
+    assert (
+        t_resolver.template(constants.TemplateType.String, "name").pattern(formatters=True)
         == "{str:s}_{int:d}_{int_pad:0=3d}"
     )
     assert (
-        t_resolver.template("template", "parent").format({"int": 50, "str": "abc"}) == "abc_50_abc"
+        t_resolver.template(constants.TemplateType.String, "parent").format(
+            {"int": 50, "str": "abc"}
+        )
+        == "abc_50_abc"
     )
     assert (
-        t_resolver.template("template", "example").format({"int": 50, "lowerCase": "abcDef"})
+        t_resolver.template(constants.TemplateType.String, "example").format(
+            {"int": 50, "lowerCase": "abcDef"}
+        )
         == "abcDef_50"
     )
-    assert t_resolver.template("template", "opt_template").parse("prefix_abc") == {"options": "abc"}
+    assert t_resolver.template(constants.TemplateType.String, "opt_template").parse(
+        "prefix_abc"
+    ) == {"options": "abc"}
     assert (
-        t_resolver.template("template", "opt_template").format({"options": "def"}) == "prefix_def"
+        t_resolver.template(constants.TemplateType.String, "opt_template").format(
+            {"options": "def"}
+        )
+        == "prefix_def"
     )
