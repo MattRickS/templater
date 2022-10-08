@@ -27,17 +27,17 @@ class TemplateResolver:
                 token_data = {constants.KEY_TYPE: token_data}
             resolver_obj.create_token(token_name, token_data)
 
-        for template_type, type_data in template_config.items():
+        for group, type_data in template_config.items():
             for name, template_string in type_data.items():
                 # Referenced templates may be already loaded by parent templates
-                if not resolver_obj.has_template(template_type, name):
+                if not resolver_obj.has_template(group, name):
                     kwargs = {}
                     if isinstance(template_string, dict):
                         kwargs = template_string
                         template_string = kwargs.pop(constants.KEY_STRING)
                     resolver_obj.create_template(
                         name,
-                        template_type,
+                        group,
                         template_string,
                         reference_config=template_config,
                         **kwargs,
@@ -46,12 +46,10 @@ class TemplateResolver:
         return resolver_obj
 
     @classmethod
-    def construct_template(
-        cls, template_type: str, name: str, segments, **kwargs
-    ) -> template.Template:
+    def construct_template(cls, group: str, name: str, segments, **kwargs) -> template.Template:
         """
         Args:
-            template_type: Template group name
+            group: Template group name
             name: Name of the template to create
             segments: List of segments in the template
 
@@ -61,7 +59,7 @@ class TemplateResolver:
         Returns:
             Constructed template
         """
-        if template_type == constants.TEMPLATE_TYPE_PATH:
+        if group == constants.TEMPLATE_TYPE_PATH:
             token_cls = pathtemplate.PathTemplate
         else:
             token_cls = template.Template
@@ -98,14 +96,14 @@ class TemplateResolver:
         """
         self._tokens = {t.name: t for t in tokens or ()}
         self._templates = {
-            template_type: {t.name: t for t in type_templates or ()}
-            for template_type, type_templates in (templates or {}).items()
+            group: {t.name: t for t in type_templates or ()}
+            for group, type_templates in (templates or {}).items()
         }
 
     def create_template(
         self,
         template_name: str,
-        template_type: str,
+        group: str,
         string: str,
         reference_config: dict = None,
         **kwargs,
@@ -117,7 +115,7 @@ class TemplateResolver:
 
         Args:
             template_name: Name of the template to create
-            template_type: Type of template to create
+            group: Type of template to create
             string: String definition for the template
 
         Keyword Args:
@@ -131,10 +129,8 @@ class TemplateResolver:
         Returns:
             Created template object stored in the resolver
         """
-        if self.has_template(template_type, template_name):
-            raise exceptions.ResolverError(
-                f"Template '{template_type}.{template_name}' already exists"
-            )
+        if self.has_template(group, template_name):
+            raise exceptions.ResolverError(f"Template '{group}.{template_name}' already exists")
 
         # Template configuration can define environment variables
         template_string = os.path.expandvars(string)
@@ -153,7 +149,7 @@ class TemplateResolver:
             if symbol == constants.SYMBOL_TEMPLATE:
                 sep_index = name.find(".")
                 if sep_index == -1:
-                    subtype = template_type
+                    subtype = group
                 else:
                     subtype = name[:sep_index]
                     name = name[sep_index + 1 :]
@@ -179,8 +175,8 @@ class TemplateResolver:
         if last_string_segment:
             segments.append(last_string_segment)
 
-        template_obj = self.construct_template(template_type, template_name, segments, **kwargs)
-        self._templates.setdefault(template_type, {})[template_name] = template_obj
+        template_obj = self.construct_template(group, template_name, segments, **kwargs)
+        self._templates.setdefault(group, {})[template_name] = template_obj
         return template_obj
 
     def create_token(self, token_name: str, token_config: dict) -> token.Token:
@@ -215,16 +211,16 @@ class TemplateResolver:
         self._tokens[token_name] = token_obj
         return token_obj
 
-    def template(self, template_type: str, name: str) -> template.Template:
+    def template(self, group: str, name: str) -> template.Template:
         """
         Raises:
             exceptions.ResolverError: If no template exists matching the name
 
         Args:
-            template_type: Type of template to get
+            group: Type of template to get
             name: Name of the template to get
         """
-        template_obj = self._templates.get(template_type, {}).get(name)
+        template_obj = self._templates.get(group, {}).get(name)
         if template_obj is None:
             raise exceptions.ResolverError(f"Requested template name does not exist: {name}")
         return template_obj
@@ -242,16 +238,16 @@ class TemplateResolver:
             raise exceptions.ResolverError(f"Requested token name does not exist: {name}")
         return token_obj
 
-    def has_template(self, template_type: str, name: str) -> bool:
+    def has_template(self, group: str, name: str) -> bool:
         """
         Args:
-            template_type: Type of template
+            group: Type of template
             name: Name of a template
 
         Returns:
             Whether or not the resolver has a template matching the name
         """
-        return name in self._templates.get(template_type, ())
+        return name in self._templates.get(group, ())
 
     def has_token(self, name: str) -> bool:
         """

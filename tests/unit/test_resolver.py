@@ -72,7 +72,7 @@ def test_get_token_cls():
 
 
 @pytest.mark.parametrize(
-    "tokens, templates, template_name, template_type, string, reference_config, expected",
+    "tokens, templates, template_name, group, string, reference_config, expected",
     [
         (
             [token.StringToken("str"), token.IntToken("int")],
@@ -119,15 +119,15 @@ def test_get_token_cls():
     ],
 )
 def test_create_template(
-    tokens, templates, template_name, template_type, string, reference_config, expected
+    tokens, templates, template_name, group, string, reference_config, expected
 ):
     resolver_obj = resolver.TemplateResolver(tokens=tokens, templates=templates)
     template_obj = resolver_obj.create_template(
-        template_name, template_type, string, reference_config=reference_config
+        template_name, group, string, reference_config=reference_config
     )
     assert repr(template_obj) == repr(expected)
-    assert template_name in resolver_obj._templates[template_type]
-    assert resolver_obj._templates[template_type][template_name] == template_obj
+    assert template_name in resolver_obj._templates[group]
+    assert resolver_obj._templates[group][template_name] == template_obj
 
 
 def test_create_template__template_exists():

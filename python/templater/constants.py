@@ -17,7 +17,6 @@ DEFAULT_PADALIGN_STR = ">"
 DEFAULT_PADCHAR_INT = "0"
 DEFAULT_PADCHAR_STR = "X"
 
-KEY_DEFAULT_TEMPLATE_TYPE = "default_template_type"
 KEY_REGEX = "regex"
 KEY_STRING = "string"
 KEY_TEMPLATES = "templates"
