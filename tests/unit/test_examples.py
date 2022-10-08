@@ -1,6 +1,6 @@
 import pytest
 
-from templater import constants, exceptions, resolver, template, token
+from templater import exceptions, resolver, template, token
 
 
 def test_template():

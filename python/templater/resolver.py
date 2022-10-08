@@ -31,14 +31,22 @@ class TemplateResolver:
             for name, template_string in type_data.items():
                 # Referenced templates may be already loaded by parent templates
                 if not resolver_obj.has_template(template_type, name):
+                    kwargs = {}
+                    if isinstance(template_string, dict):
+                        kwargs = template_string
+                        template_string = kwargs.pop(constants.KEY_STRING)
                     resolver_obj.create_template(
-                        name, template_type, template_string, reference_config=template_config
+                        name,
+                        template_type,
+                        template_string,
+                        reference_config=template_config,
+                        **kwargs,
                     )
 
         return resolver_obj
 
     @classmethod
-    def get_template_cls(cls, template_type: str) -> Type[template.Template]:
+    def get_template_cls(cls, template_type: str, **kwargs) -> Type[template.Template]:
         """
         Args:
             template_type: String name of the template type
@@ -88,7 +96,12 @@ class TemplateResolver:
         }
 
     def create_template(
-        self, template_name: str, template_type: str, string: str, reference_config: dict = None
+        self,
+        template_name: str,
+        template_type: str,
+        string: str,
+        reference_config: dict = None,
+        **kwargs,
     ) -> template.Template:
         """
         Raises:
@@ -105,6 +118,9 @@ class TemplateResolver:
                 template configs. If creating a template which references
                 additional templates that does not exist yet, the resolver will
                 try to recursively construct templates from this config.
+            kwargs: Any additional keyword arguments to provide to the template
+                class. Also provided to `get_template_cls` when determining
+                which class to use.
 
         Returns:
             Created template object stored in the resolver
@@ -157,8 +173,8 @@ class TemplateResolver:
         if last_string_segment:
             segments.append(last_string_segment)
 
-        template_cls = self.get_template_cls(template_type)
-        template_obj = template_cls(template_name, segments)
+        template_cls = self.get_template_cls(template_type, **kwargs)
+        template_obj = template_cls(template_name, segments, **kwargs)
         self._templates.setdefault(template_type, {})[template_name] = template_obj
         return template_obj
 

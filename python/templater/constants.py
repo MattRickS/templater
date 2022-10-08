@@ -19,6 +19,7 @@ DEFAULT_PADCHAR_STR = "X"
 
 KEY_DEFAULT_TEMPLATE_TYPE = "default_template_type"
 KEY_REGEX = "regex"
+KEY_STRING = "string"
 KEY_TEMPLATES = "templates"
 KEY_TOKENS = "tokens"
 KEY_TYPE = "type"

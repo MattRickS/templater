@@ -118,7 +118,9 @@ When constructing from a configuration, if the regex and format_spec are not exp
 
 ## Extending templates
 
-Custom tokens and templates can be defined and added as part of a custom resolver. The example below demonstrates how to add a custom template for templates with deprecated values, ie, a template with a removed token that needs to still parse the full set of values "{prefix}\_{key}\_{value}" -> "{key}\_{value}"
+Custom tokens and templates can be defined and added as part of a custom resolver. To support this, configuration allows providing a dictionary to each template key and uses the "string" key as the template pattern, passing any additional keywords to the `get_template_cls` and class init method.
+
+The example below demonstrates how to add a custom template for templates with deprecated values, ie, a template with a removed token that needs to still parse the full set of values "{prefix}\_{key}\_{value}" -> "{key}\_{value}".
 
 ```python
 from templater import resolver, template
@@ -142,8 +144,8 @@ class DeprecatedTemplate(template.Template):
 
 class MyTemplateResolver(resolver.TemplateResolver):
     @classmethod
-    def get_template_cls(cls, template_type):
-        if template_type == "deprecated":
+    def get_template_cls(cls, template_type, **kwargs):
+        if "static_fields" in kwargs:
             template_cls = DeprecatedTemplate
         else:
             template_cls = super(MyTemplateResolver, cls).get_template_cls(
@@ -151,25 +153,12 @@ class MyTemplateResolver(resolver.TemplateResolver):
             )
         return template_cls
 
-    def create_template(self, template_name, template_config, reference_config=None):
-        template_obj = super(MyTemplateResolver, self).create_template(
-            template_name, template_config, reference_config=reference_config
-        )
-        if isinstance(template_obj, DeprecatedTemplate):
-           template_obj.static_fields = template_config.get("static_fields")
-        return template_obj
-
 
 my_resolver = MyTemplateResolver()
 my_resolver.create_token("key", {"type": "str"})
 my_resolver.create_token("value", {"type": "str"})
 my_template = my_resolver.create_template(
-    "template",
-    {
-        "type": "deprecated",
-        "string": "{key}_{value}",
-        "static_fields": {"prefix": "pre"}
-    }
+    "template", "custom", "{key}_{value}", static_fields={"prefix": "pre"}
 )
 my_template.parse("one_two")
 # {"key": "one", "value": "two", "prefix": "pre"}
@@ -177,7 +166,4 @@ my_template.parse("one_two")
 
 ## Tests
 
-Test suite included requires the following packages to run:
-* mock
-* pyfakefs
-* pytest
+Test suite included requires pip installing the `requirements.test.in` file.
