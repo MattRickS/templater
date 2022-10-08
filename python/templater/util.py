@@ -1,4 +1,3 @@
-import six
 from typing import TYPE_CHECKING
 
 from templater import constants, exceptions
@@ -26,7 +25,7 @@ def format_string_debugger(
         segment = segments[debug_exc.segment_index]
         validate_message = [
             "String '{}' does not match".format(segment)
-            if isinstance(segment, six.string_types)
+            if isinstance(segment, str)
             else "Token '{}' does not match: {}".format(segment.name, segment.description)
         ]
     prefix_string = "Pattern: "

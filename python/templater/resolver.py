@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Iterable, List, Type
+from typing import Iterable, Type
 
 from templater import constants, exceptions, pathtemplate, template, token
 

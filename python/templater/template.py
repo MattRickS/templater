@@ -1,6 +1,5 @@
 from __future__ import annotations
 import re
-import six
 from typing import Any, Dict, List, Tuple, Union
 
 from templater import exceptions, token
@@ -59,9 +58,7 @@ class Template:
             List of string segments
         """
         return [
-            segment
-            for segment in self.segments(local_only=local_only)
-            if isinstance(segment, six.string_types)
+            segment for segment in self.segments(local_only=local_only) if isinstance(segment, str)
         ]
 
     def format(
@@ -89,7 +86,7 @@ class Template:
         unformatted = unformatted or {}
         segments = []
         for segment in self._segments:
-            if isinstance(segment, six.string_types):
+            if isinstance(segment, str):
                 string_segment = segment
             elif isinstance(segment, Template):
                 string_segment = segment.format(fields)
@@ -141,7 +138,7 @@ class Template:
         """
         segments = self.segments()
         regexes = [
-            "({})".format(segment if isinstance(segment, six.string_types) else segment.regex())
+            "({})".format(segment if isinstance(segment, str) else segment.regex())
             for segment in segments
         ]
         num_segments = len(segments)
@@ -154,7 +151,7 @@ class Template:
 
             fields = {}
             for i, (segment, value) in enumerate(zip(segments, match.groups())):
-                if isinstance(segment, six.string_types):
+                if isinstance(segment, str):
                     continue
 
                 # group 0 is the entire string, add one to find the actual group
@@ -193,7 +190,7 @@ class Template:
 
             segment = segments[segment_index]
             char_index = match.end()
-            if isinstance(segment, six.string_types):
+            if isinstance(segment, str):
                 for char_index, (a, b) in enumerate(
                     zip(segment, string[char_index:]), start=char_index
                 ):
@@ -204,7 +201,7 @@ class Template:
                 "Match fails at segment ({}) {}".format(
                     segment_index,
                     "'{}'".format(segment)
-                    if isinstance(segment, six.string_types)
+                    if isinstance(segment, str)
                     else "{{{}}}".format(segment.name),
                 ),
                 char_index,
@@ -229,7 +226,7 @@ class Template:
         """
         segments = []
         for segment in self._segments:
-            if isinstance(segment, six.string_types):
+            if isinstance(segment, str):
                 string_segment = segment
             elif isinstance(segment, token.Token):
                 if formatters:
@@ -251,7 +248,7 @@ class Template:
         backreferences = backreferences or []
         segments = []
         for segment in self._segments:
-            if isinstance(segment, six.string_types):
+            if isinstance(segment, str):
                 pattern = re.escape(segment)
             elif isinstance(segment, Template):
                 pattern = segment.regex(backreferences=backreferences)
