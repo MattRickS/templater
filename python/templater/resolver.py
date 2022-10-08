@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Iterable, Type
+from typing import Dict, Iterable, Type
 
 from templater import constants, exceptions, pathtemplate, template, token
 
@@ -46,12 +46,10 @@ class TemplateResolver:
         Returns:
             Template class the name represents
         """
-        if template_type == constants.TemplateType.String:
-            token_cls = template.Template
-        elif template_type == constants.TemplateType.Path:
+        if template_type == constants.TEMPLATE_TYPE_PATH:
             token_cls = pathtemplate.PathTemplate
         else:
-            raise exceptions.ResolverError(f"Unknown template type: {template_type}")
+            token_cls = template.Template
 
         return token_cls
 
@@ -76,8 +74,7 @@ class TemplateResolver:
     def __init__(
         self,
         tokens: Iterable[token.Token] = None,
-        string_templates: Iterable[template.Template] = None,
-        path_templates: Iterable[pathtemplate.PathTemplate] = None,
+        templates: Dict[str, Iterable[template.Template]] = None,
     ):
         """
         Args:
@@ -86,8 +83,8 @@ class TemplateResolver:
         """
         self._tokens = {t.name: t for t in tokens or ()}
         self._templates = {
-            constants.TemplateType.String: {t.name: t for t in string_templates or ()},
-            constants.TemplateType.Path: {t.name: t for t in path_templates or ()},
+            template_type: {t.name: t for t in type_templates or ()}
+            for template_type, type_templates in (templates or {}).items()
         }
 
     def create_template(
@@ -112,8 +109,10 @@ class TemplateResolver:
         Returns:
             Created template object stored in the resolver
         """
-        if template_name in self._templates[template_type]:
-            raise exceptions.ResolverError(f"Template '{template_name}' already exists")
+        if self.has_template(template_type, template_name):
+            raise exceptions.ResolverError(
+                f"Template '{template_type}.{template_name}' already exists"
+            )
 
         # Template configuration can define environment variables
         template_string = os.path.expandvars(string)
@@ -160,7 +159,7 @@ class TemplateResolver:
 
         template_cls = self.get_template_cls(template_type)
         template_obj = template_cls(template_name, segments)
-        self._templates[template_type][template_name] = template_obj
+        self._templates.setdefault(template_type, {})[template_name] = template_obj
         return template_obj
 
     def create_token(self, token_name: str, token_config: dict) -> token.Token:

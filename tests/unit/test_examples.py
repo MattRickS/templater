@@ -117,33 +117,16 @@ def test_resolver():
     with pytest.raises(exceptions.FormatError):
         lower_case_token.format("AbcDef")
 
-    assert t_resolver.template(constants.TemplateType.String, "root").pattern() == "{str}_{int}"
+    assert t_resolver.template("string", "root").pattern() == "{str}_{int}"
+    assert t_resolver.template("string", "parent").pattern() == "{str}_{int}_{str}"
     assert (
-        t_resolver.template(constants.TemplateType.String, "parent").pattern()
-        == "{str}_{int}_{str}"
-    )
-    assert (
-        t_resolver.template(constants.TemplateType.String, "name").pattern(formatters=True)
+        t_resolver.template("string", "name").pattern(formatters=True)
         == "{str:s}_{int:d}_{int_pad:0=3d}"
     )
+    assert t_resolver.template("string", "parent").format({"int": 50, "str": "abc"}) == "abc_50_abc"
     assert (
-        t_resolver.template(constants.TemplateType.String, "parent").format(
-            {"int": 50, "str": "abc"}
-        )
-        == "abc_50_abc"
-    )
-    assert (
-        t_resolver.template(constants.TemplateType.String, "example").format(
-            {"int": 50, "lowerCase": "abcDef"}
-        )
+        t_resolver.template("string", "example").format({"int": 50, "lowerCase": "abcDef"})
         == "abcDef_50"
     )
-    assert t_resolver.template(constants.TemplateType.String, "opt_template").parse(
-        "prefix_abc"
-    ) == {"options": "abc"}
-    assert (
-        t_resolver.template(constants.TemplateType.String, "opt_template").format(
-            {"options": "def"}
-        )
-        == "prefix_def"
-    )
+    assert t_resolver.template("string", "opt_template").parse("prefix_abc") == {"options": "abc"}
+    assert t_resolver.template("string", "opt_template").format({"options": "def"}) == "prefix_def"

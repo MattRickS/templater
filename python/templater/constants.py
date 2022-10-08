@@ -10,9 +10,7 @@ class TokenType:
     Int = "int"
 
 
-class TemplateType:
-    String = "string"
-    Path = "path"
+TEMPLATE_TYPE_PATH = "path"
 
 
 DEFAULT_PADALIGN_INT = "="
