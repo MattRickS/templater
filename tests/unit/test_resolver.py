@@ -16,30 +16,24 @@ def test_from_config(mock_token_module, mock_template_module):
                 "lowerCase": {"type": "str", "regex": "[a-z][a-zA-Z]+"},
             },
             "templates": {
-                "root": "{str}_{int}",
-                "parent": "{@root}_{str}",
-                "example": "{lowerCase}_{int}",
-                "name": "{@root}_{int_pad}",
+                "template": {
+                    "root": "{str}_{int}",
+                    "parent": "{@root}_{str}",
+                    "example": "{lowerCase}_{int}",
+                    "name": "{@root}_{int_pad}",
+                }
             },
         }
     )
     str_token = mock_token_module.StringToken("str")
     int_token = mock_token_module.IntToken("int")
-    int_pad_token = mock_token_module.IntToken(
-        "int_pad", regex="[0-9]{3,}", format_spec="0=3d"
-    )
+    int_pad_token = mock_token_module.IntToken("int_pad", regex="[0-9]{3,}", format_spec="0=3d")
     lower_case_token = mock_token_module.StringToken("lowerCase", "[a-z][a-zA-Z]+", "")
 
     root_template = mock_template_module.Template("root", [str_token, "_", int_token])
-    parent_template = mock_template_module.Template(
-        "parent", [root_template, "_", str_token]
-    )
-    example_template = mock_template_module.Template(
-        "example", [lower_case_token, "_", int_token]
-    )
-    name_template = mock_template_module.Template(
-        "name", [root_template, "_", int_pad_token]
-    )
+    parent_template = mock_template_module.Template("parent", [root_template, "_", str_token])
+    example_template = mock_template_module.Template("example", [lower_case_token, "_", int_token])
+    name_template = mock_template_module.Template("name", [root_template, "_", int_pad_token])
 
     assert resolver_obj._tokens == {
         "str": str_token,
@@ -48,18 +42,19 @@ def test_from_config(mock_token_module, mock_template_module):
         "lowerCase": lower_case_token,
     }
     assert resolver_obj._templates == {
-        "root": root_template,
-        "parent": parent_template,
-        "example": example_template,
-        "name": name_template,
+        "path": {},
+        "template": {
+            "root": root_template,
+            "parent": parent_template,
+            "example": example_template,
+            "name": name_template,
+        },
     }
 
 
 def test_get_template_cls():
     assert resolver.TemplateResolver.get_template_cls("template") == template.Template
-    assert (
-        resolver.TemplateResolver.get_template_cls("path") == pathtemplate.PathTemplate
-    )
+    assert resolver.TemplateResolver.get_template_cls("path") == pathtemplate.PathTemplate
 
     with pytest.raises(exceptions.ResolverError):
         resolver.TemplateResolver.get_template_cls("unknown")
@@ -74,13 +69,14 @@ def test_get_token_cls():
 
 
 @pytest.mark.parametrize(
-    "tokens, templates, template_name, template_data, reference_config, expected",
+    "tokens, templates, template_name, template_type, string, reference_config, expected",
     [
         (
             [token.StringToken("str"), token.IntToken("int")],
             [],
             "name",
-            {"string": "/abc/{str}/{int}", "type": "template"},
+            "template",
+            "/abc/{str}/{int}",
             None,
             template.Template(
                 "name", ["/abc/", token.StringToken("str"), "/", token.IntToken("int")]
@@ -90,7 +86,8 @@ def test_get_token_cls():
             [token.StringToken("str"), token.IntToken("int")],
             [template.Template("root", ["/root/", token.IntToken("int")])],
             "name",
-            {"string": "{@root}/{str}", "type": "template"},
+            "template",
+            "{@root}/{str}",
             None,
             template.Template(
                 "name",
@@ -105,12 +102,13 @@ def test_get_token_cls():
             [token.StringToken("str"), token.IntToken("int")],
             [],
             "name",
-            {"string": "{@prefix}{str}", "type": "path"},
-            {"prefix": {"string": "{int}_", "type": "template"}},
+            "path",
+            "{@prefix}{str}",
+            {"path": {"prefix": "{int}_"}},
             pathtemplate.PathTemplate(
                 "name",
                 [
-                    template.Template("prefix", [token.IntToken("int"), "_"]),
+                    pathtemplate.PathTemplate("prefix", [token.IntToken("int"), "_"]),
                     token.StringToken("str"),
                 ],
             ),
@@ -118,52 +116,44 @@ def test_get_token_cls():
     ],
 )
 def test_create_template(
-    tokens, templates, template_name, template_data, reference_config, expected
+    tokens, templates, template_name, template_type, string, reference_config, expected
 ):
-    resolver_obj = resolver.TemplateResolver(tokens=tokens, templates=templates)
+    resolver_obj = resolver.TemplateResolver(tokens=tokens, string_templates=templates)
     template_obj = resolver_obj.create_template(
-        template_name, template_data, reference_config=reference_config
+        template_name, template_type, string, reference_config=reference_config
     )
     assert repr(template_obj) == repr(expected)
-    assert template_name in resolver_obj._templates
-    assert resolver_obj._templates[template_name] == template_obj
+    assert template_name in resolver_obj._templates[template_type]
+    assert resolver_obj._templates[template_type][template_name] == template_obj
 
 
 def test_create_template__template_exists():
     resolver_obj = resolver.TemplateResolver(
-        templates=[template.Template("name", ["string"])]
+        string_templates=[template.Template("name", ["string"])]
     )
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template(
-            "name", {"string": "/root/{str}", "type": "template"}
-        )
+        resolver_obj.create_template("name", "template", "/root/{str}")
     assert str(exc_info.value) == "Template 'name' already exists"
 
 
 def test_create_template__missing_token():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template(
-            "name", {"string": "/root/{str}", "type": "template"}
-        )
+        resolver_obj.create_template("name", "template", "/root/{str}")
     assert str(exc_info.value) == "Requested token name does not exist: str"
 
 
 def test_create_template__missing_template():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template(
-            "name", {"string": "/root/{@template}", "type": "template"}
-        )
+        resolver_obj.create_template("name", "template", "/root/{@template}")
     assert str(exc_info.value) == "Requested template name does not exist: template"
 
 
 def test_create_template__invalid_symbol():
     resolver_obj = resolver.TemplateResolver()
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_template(
-            "name", {"string": "/root/{!str}", "type": "template"}
-        )
+        resolver_obj.create_template("name", "template", "/root/{!str}")
     assert str(exc_info.value) == "Unknown token symbol: !"
 
 
@@ -173,9 +163,7 @@ def test_create_template__invalid_symbol():
         (
             "int",
             {"type": "int", "description": "example"},
-            token.IntToken(
-                "int", regex="[0-9]+", format_spec="d", description="example"
-            ),
+            token.IntToken("int", regex="[0-9]+", format_spec="d", description="example"),
         ),
         (
             "int_padded",
@@ -246,9 +234,7 @@ def test_create_token__invalid_config():
     assert str(exc_info.value) == "Padmax (2) cannot be lower than padmin (3)"
 
     with pytest.raises(exceptions.ResolverError) as exc_info:
-        resolver_obj.create_token(
-            "str", {"type": "str", "regex": "[a-z]", "choices": ["a", "b"]}
-        )
+        resolver_obj.create_token("str", {"type": "str", "regex": "[a-z]", "choices": ["a", "b"]})
     assert str(exc_info.value) == "Cannot use construction keywords with explicit regex"
 
 
@@ -256,13 +242,11 @@ def test_get_template():
     int_token = token.IntToken("int")
     str_token = token.StringToken("str")
     template_obj = template.Template("template", [str_token, "_", int_token])
-    resolver_obj = resolver.TemplateResolver(
-        tokens=[int_token], templates=[template_obj]
-    )
-    assert resolver_obj.template("template") == template_obj
+    resolver_obj = resolver.TemplateResolver(tokens=[int_token], string_templates=[template_obj])
+    assert resolver_obj.template("template", "template") == template_obj
 
     with pytest.raises(exceptions.ResolverError):
-        resolver_obj.template("missing")
+        resolver_obj.template("template", "missing")
 
 
 def test_get_token():
@@ -278,11 +262,9 @@ def test_has_template():
     int_token = token.IntToken("int")
     str_token = token.StringToken("str")
     template_obj = template.Template("template", [str_token, "_", int_token])
-    resolver_obj = resolver.TemplateResolver(
-        tokens=[int_token], templates=[template_obj]
-    )
-    assert resolver_obj.has_template("template")
-    assert not resolver_obj.has_template("missing")
+    resolver_obj = resolver.TemplateResolver(tokens=[int_token], string_templates=[template_obj])
+    assert resolver_obj.has_template("template", "template")
+    assert not resolver_obj.has_template("template", "missing")
 
 
 def test_has_token():
