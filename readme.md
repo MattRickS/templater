@@ -118,7 +118,7 @@ When constructing from a configuration, if the regex and format_spec are not exp
 
 ## Extending templates
 
-Custom tokens and templates can be defined and added as part of a custom resolver. To support this, configuration allows providing a dictionary to each template key and uses the "string" key as the template pattern, passing any additional keywords to the `construct_template` method.
+Custom tokens and templates can be defined and added as part of a custom resolver. To support this, configuration allows providing a dictionary to each template key and uses the "string" key as the template pattern, passing any additional keywords to the `_construct_template` method.
 
 The example below demonstrates how to add a custom template for templates with deprecated values, ie, a template with a removed token that needs to still parse the full set of values "{prefix}\_{key}\_{value}" -> "{key}\_{value}".
 

@@ -45,54 +45,6 @@ class TemplateResolver:
 
         return resolver_obj
 
-    def _construct_template(self, group: str, name: str, segments, **kwargs) -> template.Template:
-        """
-        Args:
-            group: Template group name
-            name: Name of the template to create
-            segments: List of segments in the template
-
-        Keyword Args:
-            kwargs: Any additional arguments to the class
-
-        Returns:
-            Constructed template
-        """
-        if group == constants.TEMPLATE_TYPE_PATH:
-            token_cls = pathtemplate.PathTemplate
-        else:
-            token_cls = template.Template
-
-        return token_cls(name, segments, **kwargs)
-
-    def _construct_token(cls, token_type: str, name: str, token_config: dict) -> Type[token.Token]:
-        """
-        Args:
-            token_type: String name of the token type
-            token_config: Configuration for Token
-
-        Returns:
-            Token class the name represents
-        """
-        if token_type == constants.TokenType.Int:
-            token_cls = token.IntToken
-        elif token_type == constants.TokenType.String:
-            token_cls = token.StringToken
-        else:
-            raise exceptions.ResolverError(f"Unknown token type: {token_type}")
-
-        regex = token_cls.get_regex_from_config(token_config)
-        format_spec = token_cls.get_format_spec_from_config(token_config)
-        description = token_cls.get_description_from_config(token_config)
-        default = token_config.get("default")
-        return token_cls(
-            name,
-            regex=regex,
-            format_spec=format_spec,
-            description=description,
-            default=default,
-        )
-
     def __init__(
         self,
         tokens: Iterable[token.Token] = None,
@@ -255,3 +207,52 @@ class TemplateResolver:
             Whether or not the resolver has a token matching the name
         """
         return name in self._tokens
+
+    def _construct_template(self, group: str, name: str, segments, **kwargs) -> template.Template:
+        """
+        Args:
+            group: Template group name
+            name: Name of the template to create
+            segments: List of segments in the template
+
+        Keyword Args:
+            kwargs: Any additional arguments to the class
+
+        Returns:
+            Constructed template
+        """
+        if group == constants.TEMPLATE_TYPE_PATH:
+            token_cls = pathtemplate.PathTemplate
+        else:
+            token_cls = template.Template
+
+        return token_cls(name, segments, **kwargs)
+
+    def _construct_token(cls, token_type: str, name: str, token_config: dict) -> Type[token.Token]:
+        """
+        Args:
+            token_type: String name of the token type
+            name: Token name
+            token_config: Configuration for Token
+
+        Returns:
+            Token class the name represents
+        """
+        if token_type == constants.TokenType.Int:
+            token_cls = token.IntToken
+        elif token_type == constants.TokenType.String:
+            token_cls = token.StringToken
+        else:
+            raise exceptions.ResolverError(f"Unknown token type: {token_type}")
+
+        regex = token_cls.get_regex_from_config(token_config)
+        format_spec = token_cls.get_format_spec_from_config(token_config)
+        description = token_cls.get_description_from_config(token_config)
+        default = token_config.get("default")
+        return token_cls(
+            name,
+            regex=regex,
+            format_spec=format_spec,
+            description=description,
+            default=default,
+        )
