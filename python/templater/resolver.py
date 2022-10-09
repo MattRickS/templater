@@ -45,8 +45,7 @@ class TemplateResolver:
 
         return resolver_obj
 
-    @classmethod
-    def construct_template(cls, group: str, name: str, segments, **kwargs) -> template.Template:
+    def _construct_template(self, group: str, name: str, segments, **kwargs) -> template.Template:
         """
         Args:
             group: Template group name
@@ -66,11 +65,11 @@ class TemplateResolver:
 
         return token_cls(name, segments, **kwargs)
 
-    @classmethod
-    def get_token_cls(cls, token_type: str) -> Type[token.Token]:
+    def _construct_token(cls, token_type: str, name: str, token_config: dict) -> Type[token.Token]:
         """
         Args:
             token_type: String name of the token type
+            token_config: Configuration for Token
 
         Returns:
             Token class the name represents
@@ -82,7 +81,17 @@ class TemplateResolver:
         else:
             raise exceptions.ResolverError(f"Unknown token type: {token_type}")
 
-        return token_cls
+        regex = token_cls.get_regex_from_config(token_config)
+        format_spec = token_cls.get_format_spec_from_config(token_config)
+        description = token_cls.get_description_from_config(token_config)
+        default = token_config.get("default")
+        return token_cls(
+            name,
+            regex=regex,
+            format_spec=format_spec,
+            description=description,
+            default=default,
+        )
 
     def __init__(
         self,
@@ -175,40 +184,28 @@ class TemplateResolver:
         if last_string_segment:
             segments.append(last_string_segment)
 
-        template_obj = self.construct_template(group, template_name, segments, **kwargs)
+        template_obj = self._construct_template(group, template_name, segments, **kwargs)
         self._templates.setdefault(group, {})[template_name] = template_obj
         return template_obj
 
-    def create_token(self, token_name: str, token_config: dict) -> token.Token:
+    def create_token(self, name: str, token_config: dict) -> token.Token:
         """
         Raises:
             exceptions.ResolverError: If the token data is invalid
 
         Args:
-            token_name: Name of the token to create
+            name: Name of the token to create
             token_config: Dictionary of token data, with a minimum of a "type" key.
 
         Returns:
             Created token object stored in the resolver
         """
-        if token_name in self._tokens:
-            raise exceptions.ResolverError(f"Token '{token_name}' already exists")
+        if name in self._tokens:
+            raise exceptions.ResolverError(f"Token '{name}' already exists")
 
         token_type = token_config[constants.KEY_TYPE]
-        token_cls = self.get_token_cls(token_type)
-        regex = token_cls.get_regex_from_config(token_config)
-        format_spec = token_cls.get_format_spec_from_config(token_config)
-        description = token_cls.get_description_from_config(token_config)
-        default = token_config.get("default")
-        token_obj = token_cls(
-            token_name,
-            regex=regex,
-            format_spec=format_spec,
-            description=description,
-            default=default,
-        )
-
-        self._tokens[token_name] = token_obj
+        token_obj = self._construct_token(token_type, name, token_config)
+        self._tokens[name] = token_obj
         return token_obj
 
     def template(self, group: str, name: str) -> template.Template:

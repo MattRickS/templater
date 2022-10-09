@@ -143,12 +143,11 @@ class DeprecatedTemplate(template.Template):
 
 
 class MyTemplateResolver(resolver.TemplateResolver):
-    @classmethod
-    def construct_template(cls, group, name, segments, **kwargs):
+    def _construct_template(self, group, name, segments, **kwargs):
         if "static_fields" in kwargs:
             return DeprecatedTemplate(name, segments, static_fields=static_fields)
         else:
-            return super().construct_template(group, name, segments, **kwargs)
+            return super()._construct_template(group, name, segments, **kwargs)
 
 
 my_resolver = MyTemplateResolver()

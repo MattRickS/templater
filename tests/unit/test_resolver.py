@@ -52,23 +52,19 @@ def test_from_config(mock_token_module, mock_template_module):
 
 
 def test_construct_template():
-    assert resolver.TemplateResolver.construct_template("string", "test", []) == template.Template(
-        "test", []
-    )
-    assert resolver.TemplateResolver.construct_template(
-        "path", "test", []
-    ) == pathtemplate.PathTemplate("test", [])
-    assert resolver.TemplateResolver.construct_template("unknown", "test", []) == template.Template(
-        "test", []
-    )
+    inst = resolver.TemplateResolver()
+    assert inst._construct_template("string", "test", []) == template.Template("test", [])
+    assert inst._construct_template("path", "test", []) == pathtemplate.PathTemplate("test", [])
+    assert inst._construct_template("unknown", "test", []) == template.Template("test", [])
 
 
-def test_get_token_cls():
-    assert resolver.TemplateResolver.get_token_cls("int") == token.IntToken
-    assert resolver.TemplateResolver.get_token_cls("str") == token.StringToken
+def test_construct_token():
+    inst = resolver.TemplateResolver()
+    assert isinstance(inst._construct_token("int", "", {}), token.IntToken)
+    assert isinstance(inst._construct_token("str", "", {}), token.StringToken)
 
     with pytest.raises(exceptions.ResolverError):
-        resolver.TemplateResolver.get_token_cls("unknown")
+        inst._construct_token("unknown", "", {})
 
 
 @pytest.mark.parametrize(
