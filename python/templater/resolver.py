@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Dict, Iterable, Type
+from typing import Dict, Iterable, Iterator, Type
 
 from templater import constants, exceptions, pathtemplate, template, token
 
@@ -207,6 +207,10 @@ class TemplateResolver:
             Whether or not the resolver has a token matching the name
         """
         return name in self._tokens
+
+    def iter(self, group: str) -> Iterator[template.Template]:
+        """Iterates over all templates within a group"""
+        return iter(self._templates[group].values())
 
     def _construct_template(self, group: str, name: str, segments, **kwargs) -> template.Template:
         """
