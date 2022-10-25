@@ -7,5 +7,4 @@ setup(
     author="Matthew Shaw",
     url="https://github.com/MattRickS/templater",
     package_dir={"": "python"},
-    packages=["templater"],
 )
