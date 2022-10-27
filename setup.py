@@ -6,5 +6,4 @@ setup(
     description="Tool for formatting and parsing string templates",
     author="Matthew Shaw",
     url="https://github.com/MattRickS/templater",
-    package_dir={"": "python"},
 )
